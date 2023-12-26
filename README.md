@@ -32,6 +32,7 @@
   - Layout: Chat dialogue box at the top, followed by text box/button.
 - ✅ **WebSocket Connection and Communication Functions**
 - 🔘 **Implement SSL for WebSocket Protection**
+- ❌ **CSS layout**
 
 ## Express.js
 - ✅ **WebSocket Server Implementation**
