@@ -24,23 +24,22 @@
 
   - **Note**: After updating the `projectId`, restart your Expo application to ensure the changes take effect.
 
-
 ## React-Native Expo (RN Expo)
-- [x] **Start Page**
+- ✅ **Start Page**
   - Description: Page containing only one button "開始聊天" (Start Chat).
-- [x] **Chat Message Page**
+- ✅ **Chat Message Page**
   - Description: Page with a text box, a button, and a chat dialogue area.
   - Layout: Chat dialogue box at the top, followed by text box/button.
-- [x] **WebSocket Connection and Communication Functions**
-- [ ] **Implement SSL for WebSocket Protection**
+- ✅ **WebSocket Connection and Communication Functions**
+- 🔘 **Implement SSL for WebSocket Protection**
 
 ## Express.js
-- [x] **WebSocket Server Implementation**
-- [x] **Define Communication Functions**
-- [x] **Random Pairing Mechanism Setup**
-- [ ] **Implement SSL for WebSocket Protection**
+- ✅ **WebSocket Server Implementation**
+- ✅ **Define Communication Functions**
+- ✅ **Random Pairing Mechanism Setup**
+- 🔘 **Implement SSL for WebSocket Protection**
 
 Status Legend:
-- [x] Completed
-- [ ] Partially Completed
-- [ ] Not Started
+- ✅ Completed
+- ❌ Not Started
+- 🔘 Partially Completed

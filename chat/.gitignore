@@ -34,3 +34,9 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+.env
+esmConfig.js
+
+server.cert
+server.key

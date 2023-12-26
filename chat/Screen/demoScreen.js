@@ -10,8 +10,6 @@ let socket = null;
 const ChatScreen = ({ navigation }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
         socket = io(socketURL);
@@ -20,22 +18,14 @@ const ChatScreen = ({ navigation }) => {
             socket.emit('joinRoom', socket.id);
         });
 
-        socket.on('joinedRoom', text => {
+        socket.on('joinedRoom', room => {
             // console.log(`joinedRoom: ${room}`);
-            console.log(`text: ${text}`)
-            setLoading(false);
-            setIsConnected(true);
         });
 
         socket.on('getMessage', message => {
             // console.log(message);
             setMessages(prevMessages => [...prevMessages, { text: message, received: true }]);
         });
-        
-        socket.on('userDisconnect', message => {
-            setMessages(prevMessages => [...prevMessages, { text: message, received: true }]);
-            setIsConnected(false);
-        })
 
         return () => {
             socket.disconnect();
@@ -48,14 +38,6 @@ const ChatScreen = ({ navigation }) => {
         setMessages(prevMessages => [...prevMessages, { text: message, received: false }]);
         setMessage('');
     };
-
-    if (loading) {
-        return (
-            <View style={styles.container}>
-                <Text>配對中...</Text>
-            </View>
-        );
-    }
 
     return (
         <View style={styles.container}>
@@ -70,9 +52,8 @@ const ChatScreen = ({ navigation }) => {
                 placeholder='plz text up'
                 value={message}
                 onChangeText={text => setMessage(text)}
-                editable={isConnected}
             />
-            <Button onPress={sendMessage} disabled={!isConnected} title='送出' />
+            <Button onPress={sendMessage} title='送出' />
         </View>
     );
 };
