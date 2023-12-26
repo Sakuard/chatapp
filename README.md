@@ -1,28 +1,50 @@
 # React-Native Expo with Express.js Chat App Development Progress
 
-## `app.json` Configuration Details
+## React-Native Setup
+1. Run
+```bash
+yarn install
+```
+2. Rename `server.example.key` to `server.key`, `server.example.cert` to `server.cert`.
+3. Rename `.env.example` to `.env` and `esmConfig.example.js` to `esmConfig.js`.
+4. Rename `app.example.config` to `app.config` and replace the "projectId" value with your own `projectId` created in Expo.dev-, or use the following eas command to generate a `app.config` file of your own after you've create a proj in Expo.dev:
 
-### `eas` Section
-
-- **`projectId` in `eas`**
-  - **Description**: The `projectId` is a unique identifier for your project on Expo Application Services (EAS). It links your local project with the Expo cloud services.
-  - **Steps to Obtain and Set `projectId`**:
-    1. **Register on Expo.dev**: Visit [Expo Developer Portal](https://expo.dev/) and create an account.
-    2. **Create/Select a Project**: Once logged in, create a new project or select an existing one.
-    3. **Find `projectId`**: In the project settings on the Expo Developer Portal, locate the `projectId`.
-    4. **Update `app.json`**: Copy the `projectId` from the portal and paste it into your `app.json` file, replacing the existing empty string.
-
-    ```json
-    {
-      ...
-      "eas": {
-        "projectId": "your-projectId-here"
-      }
-      ...
+by replacing "projectId" in `app.config`
+```json
+  {
+    ...
+    "eas": {
+      "projectId": "your-projectId-here"
     }
-    ```
+    ...
+  }
+```
 
-  - **Note**: After updating the `projectId`, restart your Expo application to ensure the changes take effect.
+command to generate `app.config`
+```bash
+npm i -g eas-cli
+# replace projname to your own projname you create on Expo.dev
+npx create-expo-app 'projname'
+cd 'projname'
+# replace the following id to your own proj your create on Expo.dev
+eas init --id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+```
+5. Start the server using the command
+```bash
+npx expo start
+```
+
+## Express.js setup
+1. Run
+```bash
+yarn install
+```
+2. Rename `server.example.key` to `server.key`, `server.example.cert` to `server.cert`.
+3. Rename `.env.example` to `.env`.
+4. Start the server using the command
+```bash
+yarn dev
+```
 
 ## React-Native Expo (RN Expo)
 - ✅ **Start Page**
@@ -32,13 +54,15 @@
   - Layout: Chat dialogue box at the top, followed by text box/button.
 - ✅ **WebSocket Connection and Communication Functions**
 - 🔘 **Implement SSL for WebSocket Protection**
-- ❌ **CSS layout**
+- 🔘 **CSS layout**
+- ❌ **Dockerize**
 
 ## Express.js
 - ✅ **WebSocket Server Implementation**
 - ✅ **Define Communication Functions**
 - ✅ **Random Pairing Mechanism Setup**
 - 🔘 **Implement SSL for WebSocket Protection**
+- ❌ **Dockerize**
 
 Status Legend:
 - ✅ Completed
