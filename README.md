@@ -9,26 +9,26 @@ yarn install
 3. Rename `.env.example` to `.env` and `esmConfig.example.js` to `esmConfig.js`.
 4. Rename `app.example.config` to `app.config` and replace the "projectId" value with your own `projectId` created in Expo.dev-, or use the following eas command to generate a `app.config` file of your own after you've create a proj in Expo.dev:
 
-by replacing "projectId" in `app.config`
-```json
-  {
-    ...
-    "eas": {
-      "projectId": "your-projectId-here"
+  by replacing "projectId" in `app.config`
+  ```json
+    {
+      ...
+      "eas": {
+        "projectId": "your-projectId-here"
+      }
+      ...
     }
-    ...
-  }
-```
+  ```
 
-command to generate `app.config`
-```bash
-npm i -g eas-cli
-# replace projname to your own projname you create on Expo.dev
-npx create-expo-app 'projname'
-cd 'projname'
-# replace the following id to your own proj your create on Expo.dev
-eas init --id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-```
+  command to generate `app.config`
+  ```bash
+  npm i -g eas-cli
+  # replace projname to your project you want to connect to Expo.dev
+  npx create-expo-app 'projname'
+  cd 'projname'
+  # replace the following id to your own proj your create on Expo.dev
+  eas init --id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+  ```
 5. Start the server using the command
 ```bash
 npx expo start
