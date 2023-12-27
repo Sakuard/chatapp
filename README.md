@@ -1,38 +1,34 @@
+
 # RN + Express.js Technology and Problem Solving
 
-This project utilizes a combination of React-Native and Express.js to deliver a comprehensive chat application.
-Here are some key technologies and solutions implemented:
+This project combines React-Native and Express.js for a chat application. Key technologies:
 
-1. **WebSocket for Real-Time Chat**: This allows for instant messaging functionality in the chat application.
-2. **Object-Oriented Programming (OOP) in Backend**: The WebSocket-related code in the backend is encapsulated within a class object.
-3. **Dockerization of Backend**: The backend is packaged into a Docker image.
-4. **React-Native for Cross-Platform Compatibility**: Allowing cross platform.
-
+1. **WebSocket for Real-Time Chat**: Enables instant messaging.
+2. **OOP in Backend**: WebSocket code in backend is class-based for scalability.
+3. **Dockerization of Backend**: Backend packaged as Docker image.
+4. **React-Native for Cross-Platform**: Ensures cross-platform functionality.
 
 # React-Native Expo with Express.js Chat App Development Progress
 
 ## React-Native Setup
-1. Run
+1. Install dependencies:
 ```bash
 yarn install
 # or
 npm i
 ```
-2. Rename `server.example.key` to `server.key`, `server.example.cert` to `server.cert`.
-3. Rename `.env.example` to `.env` and `esmConfig.example.js` to `esmConfig.js`.
-4. Rename `app.example.config` to `app.config` and replace the "projectId" value with your own `projectId` created in Expo.dev-, or use the following eas command to generate a `app.config` file of your own after you've create a proj in Expo.dev:
-by replacing "projectId" in `app.config`
+2. Update `.env` and `esmConfig.js` configurations.
+3. Set up `app.config` for Expo.dev:
 ```json
-  {
-    ...
-    "eas": {
+{
+   ...
+   "eas": {
       "projectId": "your-projectId-here"
-    }
-    ...
-  }
+   }
+   ...
+}
 ```
-
-command to generate `app.config`
+OR Generate with eas-cli:
 ```bash
 npm i -g eas-cli
 # replace projname to your project you want to connect to Expo.dev
@@ -41,59 +37,52 @@ cd 'projname'
 # replace the following id to your own proj your create on Expo.dev
 eas init --id xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 ```
-5. Start the server using the command
+4. Start the server:
 ```bash
 npx expo start
 ```
 
-## Express.js setup
-1. Run
+## Express.js Setup
+1. Install dependencies.
 ```bash
 yarn install
 # or
 npm i
 ```
-2. Rename `server.example.key` to `server.key`, `server.example.cert` to `server.cert`.
-3. Rename `.env.example` to `.env`.
-4. Start the server using the command
+2. Rename key and certificate files(@/cert).
+3. Update `.env` configuration.
+4. Start the server:
 ```bash
 yarn dev
 # or 
 npm run dev
 ```
 
-### Express.js Dockerize setup
-
-1. please make sure you've install docker
-2. terminal CD to socker server folder
-```bash
-cd chatapp/serveer
-```
-3. build and run docker image
+### Dockerizing Express.js
+1. Install Docker.
+2. Navigate to the server directory.
+3. Build and run Docker image:
 ```bash
 docker build -t chatapp-server .
 docker run -t -p 3100:3100 chatapp-server
 ```
 
 ## React-Native Expo (RN Expo)
-- ✅ **Start Page**
-  - Description: Page containing only one button "開始聊天" (Start Chat).
-- ✅ **Chat Message Page**
-  - Description: Page with a text box, a button, and a chat dialogue area.
-  - Layout: Chat dialogue box at the top, followed by text box/button.
-- ✅ **WebSocket Connection and Communication Functions**
-- 🚫 **Implement SSL for WebSocket Protection**
+- ✅ **Start Page**: Only a "Start Chat" button.
+- ✅ **Chat Message Page**: Text box, button, and chat area.
+- ✅ **WebSocket Functions**
+- 🚫 **SSL for WebSocket**
 - 🔘 **CSS layout**
-- 🚫 **Dockerize**
+- 🚫 **Dockerization**
 
 ## Express.js
-- ✅ **WebSocket Server Implementation**
-- ✅ **Define Communication Functions**
-- ✅ **Random Pairing Mechanism Setup**
-- ✅ **Implement SSL for WebSocket Protection(SSL is ready but still using http for now)**
-- ✅ **Dockerize**
+- ✅ **WebSocket Server**
+- ✅ **Communication Functions**
+- ✅ **Random Pairing Mechanism**
+- ✅ **SSL for WebSocket (using HTTP for now)**
+- ✅ **Dockerization**
 
-Status Legend:
+## Status Legend
 - ✅ Completed
 - ❌ Not Started
 - 🔘 Partially Completed
