@@ -51,6 +51,19 @@ yarn dev
 npm run dev
 ```
 
+# Express.js Dockerize setup
+please make sure you've install docker
+
+1. terminal CD to socker server folder
+```bash
+cd chatapp/serveer
+```
+2. build and run docker image
+```bash
+docker build -t chatapp-server .
+docker run -t -p 3100:3100 chatapp-server
+```
+
 ## React-Native Expo (RN Expo)
 - ✅ **Start Page**
   - Description: Page containing only one button "開始聊天" (Start Chat).
@@ -58,18 +71,19 @@ npm run dev
   - Description: Page with a text box, a button, and a chat dialogue area.
   - Layout: Chat dialogue box at the top, followed by text box/button.
 - ✅ **WebSocket Connection and Communication Functions**
-- 🔘 **Implement SSL for WebSocket Protection**
+- 🚫 **Implement SSL for WebSocket Protection**
 - 🔘 **CSS layout**
-- ❌ **Dockerize**
+- 🚫 **Dockerize**
 
 ## Express.js
 - ✅ **WebSocket Server Implementation**
 - ✅ **Define Communication Functions**
 - ✅ **Random Pairing Mechanism Setup**
 - 🔘 **Implement SSL for WebSocket Protection**
-- ❌ **Dockerize**
+- ✅ **Dockerize**
 
 Status Legend:
 - ✅ Completed
 - ❌ Not Started
 - 🔘 Partially Completed
+- 🚫 Planned but Terminated

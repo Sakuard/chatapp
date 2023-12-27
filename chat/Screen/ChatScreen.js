@@ -1,20 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Input } from '@rneui/base';
 
 import io from 'socket.io-client';
 import { socketURL } from '../esmConfig';
 
+import axios from 'axios';
+
 let socket = null;
 
 const ChatScreen = ({ navigation }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const [chatReady, setChatReady] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
 
+    useLayoutEffect(() => {
+        navigation.setOptions({
+            headerBackTitle: '離開聊天室'
+        });
+    }, [navigation]);
+
     useEffect(() => {
-        socket = io(socketURL);
+        // socket = io(socketURL);
+        socket = io(socketURL, { transports: ['websocket'] });
         socket.on('connected', () => {
             // console.log(`webSocket is connected: ${socket.id}`);
             socket.emit('joinRoom', socket.id);
@@ -22,8 +31,8 @@ const ChatScreen = ({ navigation }) => {
 
         socket.on('joinedRoom', text => {
             // console.log(`joinedRoom: ${room}`);
-            console.log(`text: ${text}`)
-            setLoading(false);
+            console.log(`text: ${JSON.stringify(text)}`)
+            setChatReady(text.ready);
             setIsConnected(true);
         });
 
@@ -49,7 +58,7 @@ const ChatScreen = ({ navigation }) => {
         setMessage('');
     };
 
-    if (loading) {
+    if (!chatReady) {
         return (
             <View style={styles.container}>
                 <Text>配對中...</Text>

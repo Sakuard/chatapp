@@ -20,14 +20,15 @@ export default function App({navigation}) {
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={globalScreenOptions}>
-        <Stack.Screen name='Login' component={LoginScreen} />
-        <Stack.Screen name='Chat' component={ChatScreen} />
+        <Stack.Screen name='配對聊天' component={LoginScreen} />
+        <Stack.Screen
+          name='Chat'
+          component={ChatScreen}
+          options={{
+            title:'開始聊天'
+          }}/>
       </Stack.Navigator>
     </NavigationContainer>
-    // <View style={styles.container}>
-    //   <Text>Open up App.js to start working on your app!</Text>
-    //   <StatusBar style="auto" />
-    // </View>
   );
 }
 
