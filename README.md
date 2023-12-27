@@ -1,3 +1,14 @@
+# RN + Express.js Technology and Problem Solving
+
+This project utilizes a combination of React-Native and Express.js to deliver a comprehensive chat application.
+Here are some key technologies and solutions implemented:
+
+1. **WebSocket for Real-Time Chat**: This allows for instant messaging functionality in the chat application.
+2. **Object-Oriented Programming (OOP) in Backend**: The WebSocket-related code in the backend is encapsulated within a class object.
+3. **Dockerization of Backend**: The backend is packaged into a Docker image.
+4. **React-Native for Cross-Platform Compatibility**: Allowing cross platform.
+
+
 # React-Native Expo with Express.js Chat App Development Progress
 
 ## React-Native Setup
