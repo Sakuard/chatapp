@@ -52,13 +52,13 @@ npm run dev
 ```
 
 ### Express.js Dockerize setup
-please make sure you've install docker
 
-1. terminal CD to socker server folder
+1. please make sure you've install docker
+2. terminal CD to socker server folder
 ```bash
 cd chatapp/serveer
 ```
-2. build and run docker image
+3. build and run docker image
 ```bash
 docker build -t chatapp-server .
 docker run -t -p 3100:3100 chatapp-server
