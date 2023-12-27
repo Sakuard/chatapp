@@ -79,7 +79,7 @@ docker run -t -p 3100:3100 chatapp-server
 - ✅ **WebSocket Server Implementation**
 - ✅ **Define Communication Functions**
 - ✅ **Random Pairing Mechanism Setup**
-- 🔘 **Implement SSL for WebSocket Protection**
+- ✅ **Implement SSL for WebSocket Protection(SSL is ready but still using http for now)**
 - ✅ **Dockerize**
 
 Status Legend:
