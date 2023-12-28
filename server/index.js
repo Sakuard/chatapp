@@ -1,6 +1,6 @@
 const express = require('express');
 const app = express();
-// const https = require('https');
+const https = require('https');
 const http = require('http');
 const WebSocketServer = require('./socketClient.js');
 require('dotenv').config();
@@ -18,7 +18,7 @@ const httpsOptions = {
 };
 
 // const server = https.createServer(httpsOptions, app);
-const server = http.createServer(httpsOptions, app);
+const server = http.createServer(app);
 const io = new WebSocketServer(server, corsSet);
 
 app.get('/', (req, res) => {
