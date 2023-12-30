@@ -4,7 +4,7 @@
 This project combines React-Native and Express.js for a chat application. Key technologies:
 
 1. **WebSocket for Real-Time Chat**: Enables instant messaging.
-2. **OOP in Backend**: WebSocket code in backend is class-based for scalability.
+2. **OOP in Backend**: WebSocket code is packed up as class-based for scalability.
 3. **Dockerization of Backend**: Backend packaged as Docker image.
 4. **React-Native for Cross-Platform**: Ensures cross-platform functionality.
 

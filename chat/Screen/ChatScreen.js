@@ -1,19 +1,18 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Input } from '@rneui/base';
 
-import io from 'socket.io-client';
-import { socketURL } from '../esmConfig';
-
-import axios from 'axios';
-
-let socket = null;
+import SocketClient from '../socketClient';
 
 const ChatScreen = ({ navigation }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [chatReady, setChatReady] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
+
+    // const socketClient = new SocketClient();
+    const socketClientRef = useRef(null);
+
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -22,40 +21,22 @@ const ChatScreen = ({ navigation }) => {
     }, [navigation]);
 
     useEffect(() => {
-        // socket = io(socketURL);
-        socket = io(socketURL, { transports: ['websocket'] });
-        socket.on('connected', () => {
-            // console.log(`webSocket is connected: ${socket.id}`);
-            socket.emit('joinRoom', socket.id);
-        });
-
-        socket.on('joinedRoom', text => {
-            // console.log(`joinedRoom: ${room}`);
-            console.log(`text: ${JSON.stringify(text)}`)
-            setChatReady(text.ready);
-            setIsConnected(true);
-        });
-
-        socket.on('getMessage', message => {
-            // console.log(message);
-            setMessages(prevMessages => [...prevMessages, { text: message, received: true }]);
-        });
-        
-        socket.on('userDisconnect', message => {
-            setMessages(prevMessages => [...prevMessages, { text: message, received: true }]);
-            setIsConnected(false);
-        })
+        if (!socketClientRef.current) {
+            socketClientRef.current = new SocketClient();
+            socketClientRef.current.connect(setChatReady, setIsConnected, setMessages);
+        }
 
         return () => {
-            socket.disconnect();
+            socketClientRef.current.disconnect();
         };
     }, []);
 
     const sendMessage = () => {
-        // console.log(`sendMessage: ${message}`);
-        socket.emit('sendMessage', message);
-        setMessages(prevMessages => [...prevMessages, { text: message, received: false }]);
-        setMessage('');
+        if (socketClientRef.current) {
+            socketClientRef.current.sendMessage(message);
+            setMessages(prevMessages => [...prevMessages, { text: message, received: false }]);
+            setMessage('');
+        }
     };
 
     if (!chatReady) {

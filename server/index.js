@@ -2,7 +2,7 @@ const express = require('express');
 const app = express();
 const https = require('https');
 const http = require('http');
-const WebSocketServer = require('./socketClient.js');
+const WebSocketServer = require('./socketServer.js');
 require('dotenv').config();
 const cors = require('cors');
 const fs = require('fs');

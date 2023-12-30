@@ -4,7 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 class WebSocketServer {
     constructor(server, corsOptions) {
         this.io = new Server(server, { cors: corsOptions });
-        this.chatrooms = [];
+        this.chatrooms = new Map();
         this.setup();
     }
 
@@ -21,58 +21,58 @@ class WebSocketServer {
 
     joinRoom(socket, userid) {
         let joined = false;
-        if (this.chatrooms.length === 0) {
-            this.chatrooms.push({
+        if (this.chatrooms.size === 0) {
+            const roomname = uuidv4();
+            this.chatrooms.set(roomname, {
                 roomfull: false,
-                roomname: uuidv4(),
                 users: [userid]
             });
-            socket.join(this.chatrooms[0].roomname);
+            socket.join(roomname);
             socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
         } else {
-            for (let room of this.chatrooms) {
+            for (let [roomname, room] of this.chatrooms) {
                 if (room.users.length === 1 && !room.roomfull) {
                     room.users.push(userid);
                     room.roomfull = true;
-                    socket.join(room.roomname);
-                    this.io.to(room.roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
+                    socket.join(roomname);
+                    this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
                     joined = true;
                     break;
                 }
             }
 
             if (!joined) {
-                const newRoom = {
+                const newRoomName = uuidv4();
+                this.chatrooms.set(newRoomName, {
                     roomfull: false,
-                    roomname: uuidv4(),
                     users: [userid]
-                };
-                this.chatrooms.push(newRoom);
-                socket.join(newRoom.roomname);
+                });
+                socket.join(newRoomName);
                 socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
             }
         }
-        // console.log("chatRoom: \n",this.chatrooms);
     }
     
     sendMessage(socket, message) {
-        const room = this.chatrooms.find(r => r.users.includes(socket.id));
-        if (room) {
-            socket.broadcast.to(room.roomname).emit('getMessage', message);
+        for (let [roomname, room] of this.chatrooms) {
+            if (room.users.includes(socket.id)) {
+                socket.broadcast.to(roomname).emit('getMessage', message);
+                break;
+            }
         }
     }
     
     disconnect(socket) {
-        this.chatrooms.forEach((room, index) => {
+        for (let [roomname, room] of this.chatrooms) {
             if (room.users.includes(socket.id)) {
                 room.users.splice(room.users.indexOf(socket.id), 1);
-                socket.broadcast.to(room.roomname).emit('userDisconnect', '對方已經離開');
+                socket.broadcast.to(roomname).emit('userDisconnect', '對方已經離開');
                 if (room.users.length === 0) {
-                    this.chatrooms.splice(index, 1);
+                    this.chatrooms.delete(roomname);
                 }
+                break;
             }
-        });
-        // console.log("chatRoom: \n",this.chatrooms);
+        }
     }
 }
 
