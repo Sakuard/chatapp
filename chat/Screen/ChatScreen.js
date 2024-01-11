@@ -4,15 +4,14 @@ import { Button, Input } from '@rneui/base';
 
 import SocketClient from '../socketClient';
 
-const ChatScreen = ({ navigation }) => {
+const ChatScreen = ({ navigation, route }) => {
     const [message, setMessage] = useState('');
     const [messages, setMessages] = useState([]);
     const [chatReady, setChatReady] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
-
-    // const socketClient = new SocketClient();
+    const [isSecretFull, setIsSecretFull] = useState(false);
+    
     const socketClientRef = useRef(null);
-
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -21,15 +20,25 @@ const ChatScreen = ({ navigation }) => {
     }, [navigation]);
 
     useEffect(() => {
-        if (!socketClientRef.current) {
-            socketClientRef.current = new SocketClient();
-            socketClientRef.current.connect(setChatReady, setIsConnected, setMessages);
+        let secretCode = route.params.secretCode
+        socketClientRef.current = new SocketClient();
+        if (secretCode === '') {
+            socketClientRef.current.connect('', setChatReady, setIsConnected, setMessages);
         }
-
-        return () => {
+        else {
+            // alert(`secretCode: ${secretCode}`)
+            socketClientRef.current.connect(secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull);
+        }
+        return() => {
             socketClientRef.current.disconnect();
-        };
-    }, []);
+        }
+    },[])
+    useEffect(() => {
+        if (isSecretFull) {
+            navigation.goBack();
+        }
+    },[isSecretFull])
+    
 
     const sendMessage = () => {
         if (socketClientRef.current) {
@@ -39,6 +48,13 @@ const ChatScreen = ({ navigation }) => {
         }
     };
 
+    // if (isSecretFull) {
+    //     return (
+    //         <View style={styles.container}>
+    //             <Text>聊天室已滿</Text>
+    //         </View>
+    //     );
+    // }
     if (!chatReady) {
         return (
             <View style={styles.container}>

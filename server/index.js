@@ -2,10 +2,10 @@ const express = require('express');
 const app = express();
 const https = require('https');
 const http = require('http');
-const WebSocketServer = require('./socketServer.js');
 require('dotenv').config();
 const cors = require('cors');
 const fs = require('fs');
+const WebSocketServer = require('./dist/socketServer.js').default;
 
 const corsSet = {
     origin: '*'
@@ -23,7 +23,7 @@ const io = new WebSocketServer(server, corsSet);
 
 app.get('/', (req, res) => {
     console.log(`req on /`)
-    res.send('test');
+    res.send('api test data');
 });
 
 server.listen(process.env.PORT, () => {

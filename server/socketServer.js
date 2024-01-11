@@ -1,10 +1,28 @@
+// @ts-check
 const { Server } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
+const redis = require('redis');
+
+const redisClient = redis.createClient({ url: process.env.REDIS_SERVER });
+
+redisClient.set('test', 'test value');
+console.log(redisClient.get('test'));
 
 class WebSocketServer {
+
+    /**
+     * Constructs a WebSocketServer.
+     * @param {any} server - http/https server
+     * @param {{origin: string | string[]}} corsOptions - CORS configuration.
+     */
     constructor(server, corsOptions) {
+
+        /** @type {Server} io - The Socket.IO server instance. */
         this.io = new Server(server, { cors: corsOptions });
+
+        /** @type {Map.<String, {roomfull: boolean, users: Array.<String>}>} chatrooms - chatroom map */
         this.chatrooms = new Map();
+        
         this.setup();
     }
 
@@ -19,7 +37,12 @@ class WebSocketServer {
         });
     }
 
+    /**
+     * use socket.id to join room
+     * @param {string} userid 
+     */
     joinRoom(socket, userid) {
+        console.log(`userid: ${userid}`)
         let joined = false;
         if (this.chatrooms.size === 0) {
             const roomname = uuidv4();
@@ -53,6 +76,10 @@ class WebSocketServer {
         }
     }
     
+    /**
+     * send message to the other user in the same room
+     * @param {string} message 
+     */
     sendMessage(socket, message) {
         for (let [roomname, room] of this.chatrooms) {
             if (room.users.includes(socket.id)) {
@@ -62,6 +89,9 @@ class WebSocketServer {
         }
     }
     
+    /**
+     * on disconnect, remove user from chatroom
+     */
     disconnect(socket) {
         for (let [roomname, room] of this.chatrooms) {
             if (room.users.includes(socket.id)) {
