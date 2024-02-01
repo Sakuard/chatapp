@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon index.js"
+    "dev": "nodemon index.js",
+    "test": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -22,5 +23,8 @@
     "typescript": "^5.3.3",
     "uuid": "^9.0.1",
     "ws": "^8.15.1"
+  },
+  "devDependencies": {
+    "vitest": "^1.2.2"
   }
 }

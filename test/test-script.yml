@@ -1,0 +1,20 @@
+config:
+  target: "http://localhost:4100"  # 您的服务器地址
+  phases:
+    - duration: 60  # 测试持续时间（秒）
+      arrivalRate: 40  # 每秒新建立的虚拟用户数
+  engines:
+    socketio-v3: {}  # 使用 socket.io v3 引擎
+
+scenarios:
+  - engine: "socketio-v3"
+    flow:
+      - loop:
+          - emit:
+              channel: "test"
+              data: "Test message from user_{{ $randomString }}"  # 发送测试消息
+          - listen:
+              channel: "test"
+              timeout: 2  # 设置超时时间（秒）
+          - think: 1  # 每次发送消息后等待的秒数
+        count: 100  # 循环发送消息的次数

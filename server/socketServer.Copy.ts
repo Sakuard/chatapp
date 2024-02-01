@@ -73,68 +73,42 @@ class WebSocketServer {
         console.log(`user Join\nuser:${userid}\nroom:`, userRoom,'\n')
         if (this.chatrooms.size === 0) {
             // const roomname = uuidv4();
-            let roomname = joinParams.secretcode === '' ? uuidv4() : joinParams.secretcode;
-            this.chatrooms.set(roomname, {
-                secret: joinParams.secretcode === '' ? false : true,
-                roomfull: false,
-                users: [userid]
-            });
-
+            let roomname
+            if (joinParams.secretcode !== '') {
+                roomname = joinParams.secretcode;
+                this.chatrooms.set(roomname, {
+                    secret: true,
+                    roomfull: false,
+                    users: [userid]
+                });
+            }
+            else {
+                roomname = uuidv4();
+                this.chatrooms.set(roomname, {
+                    secret: false,
+                    roomfull: false,
+                    users: [userid]
+                });
+            }
             $redis.set(userid, roomname)
             socket.join(roomname);
             socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
             let userRoom = await $redis.get(userid)
             console.log(`no Room 1st join\n user:${userid}\nroom:`, userRoom)
         } else {
-
             if (joinParams.secretcode === '') {
                 for (let [roomname, room] of this.chatrooms) {
                     if (room.users.length === 1 && !room.roomfull && !room.secret) {
-
                         room.users.push(userid);
                         room.roomfull = true;
-                        
+                        $redis.set(userid, roomname)
                         socket.join(roomname);
                         this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
                         joined = true;
-                        
-                        $redis.set(userid, roomname)
+                        // await $redis.get(userid).then((res:string) => console.log(`redis: `, res))
                         let userRoom = await $redis.get(userid)
                         console.log(`have room 1st join\n user:${userid}\nroom:`, userRoom)
                         break;
-                    }
-                }
-                if (!joined) {
-
-                    let roomname = uuidv4();
-                    this.chatrooms.set(roomname, {
-                        secret: false,
-                        roomfull: false,
-                        users: [userid]
-                    });
-                    $redis.set(userid, roomname)
-                    socket.join(roomname);
-                    socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
-                    // await $redis.get(userid).then((res:string) => console.log(`redis: `, res))
-
-
-                    if (true) {
-
-                    }
-                    else {
-                        const newRoomName = uuidv4();
-                        this.chatrooms.set(newRoomName, {
-                            secret: false,
-                            roomfull: false,
-                            users: [userid]
-                        });
-                        $redis.set(userid, newRoomName)
-                        socket.join(newRoomName);
-                        socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
-                        // await $redis.get(userid).then((res:string) => console.log(`redis: `, res))
-                        
-                        let userRoom = await $redis.get(userid)
-                        console.log(`1st join\n user:${userid}\nroom:`, userRoom)
                     }
                 }
             }
@@ -165,6 +139,46 @@ class WebSocketServer {
                 }
             }
             
+            if (!joined) {
+                if (joinParams.secretcode !== '') {
+                    for (const [roomname, room] of this.chatrooms) {
+                        if (roomname === joinParams.secretcode) {
+                            socket.emit('joinedRoomFull', { text: '滿員', ready: false });
+                            return;
+                        }
+                    }
+                    const newRoomName = joinParams.secretcode;
+                    this.chatrooms.set(newRoomName, {
+                        secret: true,
+                        roomfull: false,
+                        users: [userid]
+                    });
+                    $redis.set(userid, newRoomName)
+                    socket.join(newRoomName);
+                    socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
+                    
+                    let userRoom = await $redis.get(userid)
+                    console.log(`1st join\n user:${userid}\nroom:`, userRoom)
+                }
+                else {
+                    const newRoomName = uuidv4();
+                    this.chatrooms.set(newRoomName, {
+                        secret: false,
+                        roomfull: false,
+                        users: [userid]
+                    });
+                    $redis.set(userid, newRoomName)
+                    socket.join(newRoomName);
+                    socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
+                    // await $redis.get(userid).then((res:string) => console.log(`redis: `, res))
+                    
+                    let userRoom = await $redis.get(userid)
+                    console.log(`1st join\n user:${userid}\nroom:`, userRoom)
+                }
+            }
+            else {
+
+            }
         }
         // if (userRoom === null) {
         //     if (this.chatrooms.size === 0) {
