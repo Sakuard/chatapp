@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button, Input } from '@rneui/base';
+import { v4 as uuidv4 } from 'uuid';
 
 import SocketClient from '../socketClient';
 
@@ -10,6 +11,7 @@ const ChatScreen = ({ navigation, route }) => {
     const [chatReady, setChatReady] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
     const [isSecretFull, setIsSecretFull] = useState(false);
+    const [chatSession, setChatSession] = useState('');
     
     const socketClientRef = useRef(null);
 
@@ -20,19 +22,33 @@ const ChatScreen = ({ navigation, route }) => {
     }, [navigation]);
 
     useEffect(() => {
-        let secretCode = route.params.secretCode
-        socketClientRef.current = new SocketClient();
-        if (secretCode === '') {
-            socketClientRef.current.connect('', setChatReady, setIsConnected, setMessages);
+        let session;
+        if (localStorage.getItem('TECHPORN_CHAT_USER') === null || localStorage.getItem('TECHPORN_CHAT_USER') === undefined || localStorage.getItem('TECHPORN_CHAT_USER') === '') {
+            localStorage.setItem('TECHPORN_CHAT_USER', uuidv4());
+            setChatSession(localStorage.getItem('TECHPORN_CHAT_USER'));
+            // console.log(`chatSession: ${chatSession}`)
+            session = localStorage.getItem('TECHPORN_CHAT_USER');    
         }
         else {
-            // alert(`secretCode: ${secretCode}`)
-            socketClientRef.current.connect(secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull);
+            // console.log(`session: `, localStorage.getItem('TECHPORN_CHAT_USER'))
+            setChatSession(localStorage.getItem('TECHPORN_CHAT_USER'));
+            session = localStorage.getItem('TECHPORN_CHAT_USER');
         }
+        console.log(`chatSession: ${session}`)
+        let secretCode = route.params.secretCode
+        socketClientRef.current = new SocketClient();
+        if (secretCode === null || secretCode === undefined) {
+            secretCode = '';
+        }
+        socketClientRef.current.connect(session, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull);
         return() => {
             socketClientRef.current.disconnect();
+            console.log(`emit disconnect`)
         }
     },[])
+    // useEffect(() => {
+    //     console.log(`chatSession <3: `, chatSession)
+    // },[chatSession])
     useEffect(() => {
         if (isSecretFull) {
             navigation.goBack();
@@ -42,8 +58,8 @@ const ChatScreen = ({ navigation, route }) => {
 
     const sendMessage = () => {
         if (socketClientRef.current) {
-            socketClientRef.current.sendMessage(message);
-            setMessages(prevMessages => [...prevMessages, { text: message, received: false }]);
+            socketClientRef.current.sendMessage(message, chatSession);
+            setMessages(prevMessages => [...prevMessages, { text: message, id: chatSession, received: false }]);
             setMessage('');
         }
     };
@@ -67,7 +83,7 @@ const ChatScreen = ({ navigation, route }) => {
         <View style={styles.container}>
             <ScrollView style={styles.scrollView}>
                 {messages.map((msg, idx) => (
-                    <View key={idx} style={[styles.messageBox, msg.received ? styles.leftMessage : styles.rightMessage]}>
+                    <View key={idx} style={[styles.messageBox, msg.id !== chatSession ? styles.leftMessage : styles.rightMessage]}>
                         <Text>{msg.text}</Text>
                     </View>
                 ))}

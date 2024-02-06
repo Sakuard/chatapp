@@ -1,6 +1,7 @@
 // @ts-check
 // SocketClient.js
 import io from 'socket.io-client';
+import { v4 as uuidv4 } from 'uuid';
 import { socketURL } from './esmConfig';
 
 class SocketClient {
@@ -13,29 +14,33 @@ class SocketClient {
     }
 
     /**
+     * @param {string} id - UserID
      * @param {string} secretCode - secret code
      * @param {Function} setChatReady - react state function
      * @param {Function} setIsConnected - react state function
      * @param {Function} setMessages - react state function
      * @param {Function} setIsSecretFull - react state function
      */
-    connect(secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull) {
-        if (secretCode === '') {
-            this.socket.on('connected', () => {
-                this.socket.emit('joinRoom', this.socket.id);
-            });
-        }
-        else {
-            this.socket.on('connected', () => {
-                let joinParams = {
-                    id: this.socket.id,
-                    secretcode: secretCode
-                }
-                // alert(`joinRoom/v2: ${JSON.stringify(joinParams)}`)
-                this.socket.emit('joinRoom/v2', joinParams);
-            });
-        }
+    connect(id, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull) {
+        // here, i want to add a localstorage for 
+        console.log(`passed in ID: ${id}`)
+        this.socket.on('connected', () => {
+            // this.socket.emit('joinRoom', this.socket.id);
+            let joinParams = this.paramsGen(this.socket.id, secretCode, id);
+            this.socket.emit('joinRoom/v2', joinParams);
+        });
 
+        this.socket.on('reJoin', data => {
+            console.log(`reJoin: ,`, data)
+            setChatReady(data.ready);
+            if (data.ready) {
+                setIsConnected(true);
+            }
+            let chatMsg = JSON.parse(data.text);
+            console.log(`chatMsg from reJoin: `, chatMsg);
+            if (chatMsg.text.length > 0)
+                setMessages(chatMsg);
+        })
         this.socket.on('joinedRoom', text => {
             setChatReady(text.ready);
             if (text.ready) {
@@ -45,7 +50,8 @@ class SocketClient {
         });
 
         this.socket.on('getMessage', message => {
-            setMessages(prevMessages => [...prevMessages, { text: message, received: true }]);
+            console.log(`getMessage: `, message)
+            setMessages(prevMessages => [...prevMessages, { text: message.text, id:message.id, received: true }]);
         });
 
         this.socket.on('userDisconnect', message => {
@@ -63,8 +69,27 @@ class SocketClient {
         this.socket.disconnect();
     }
 
-    sendMessage(message) {
-        this.socket.emit('sendMessage', message);
+    sendMessage(message, session) {
+        let msgParams = {
+            id: session,
+            msg: message
+        }
+        this.socket.emit('sendMessage', msgParams);
+    }
+
+    /**
+     * 
+     * @param {string} socketid 
+     * @param {string} secretcode 
+     * @returns 
+     */
+    paramsGen(socketid, secretcode, session) {
+        return {
+            id: socketid,
+            session: session,
+            secretcode: secretcode
+        }
+
     }
 }
 

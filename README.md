@@ -73,7 +73,7 @@ docker run -t -p 3100:3100 chatapp-server
 - ✅ **WebSocket Functions**
 - 🚫 **SSL for WebSocket**
 - 🔘 **CSS layout**
-- 🚫 **Dockerization**
+- ✅ **Dockerization**
 - **2024/01**
 - ✅ **Secret Code Feature (for specific room match)**
 
@@ -86,7 +86,7 @@ docker run -t -p 3100:3100 chatapp-server
 - **2024/01**
 - ✅ **Secret Code Feature (for specific room match)**
 - ✅ **restructure socket related code into typescript class Object**
-- ❌ **Redis Cache for Secret Code Feature's Room Cache**
+- 🔘 **Redis Cache for Secret Code Feature's Room Cache**
 
 ## Status Legend
 - ✅ Completed

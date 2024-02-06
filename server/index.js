@@ -12,10 +12,10 @@ const corsSet = {
 };
 app.use(cors(corsSet));
 
-const httpsOptions = {
-    key: fs.readFileSync('./cert/server.key'),
-    cert: fs.readFileSync('./cert/server.cert')
-};
+// const httpsOptions = {
+//     key: fs.readFileSync('./cert/server.key'),
+//     cert: fs.readFileSync('./cert/server.cert')
+// };
 
 // const server = https.createServer(httpsOptions, app);
 const server = http.createServer(app);
