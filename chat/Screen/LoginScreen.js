@@ -28,6 +28,10 @@ const LoginScreen = ({ navigation }) => {
       <Button
         style={styles.button}
         onPress={() => {
+          if (secretCode === '') {
+            alert('請輸入密語');
+            return;
+          }
           join(secretCode);
           // navigation.navigate('Chat', {secretCode});
           // setSecretCode('');

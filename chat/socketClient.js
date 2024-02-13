@@ -3,6 +3,7 @@
 import io from 'socket.io-client';
 import { v4 as uuidv4 } from 'uuid';
 import { socketURL } from './esmConfig';
+import CrytpoJS from 'crypto-js';
 
 class SocketClient {
 
@@ -97,10 +98,13 @@ class SocketClient {
      * @returns 
      */
     paramsGen(socketid, secretcode, session) {
+        let hashed = CrytpoJS.SHA256(secretcode).toString(CrytpoJS.enc.Hex);
+        console.log(`hashed: ${hashed}`)
+        console.log(`typeof hashed: ${typeof hashed}`)
         return {
             id: socketid,
             session: session,
-            secretcode: secretcode
+            secretcode: hashed
         }
 
     }
