@@ -44,3 +44,6 @@ server.cert
 server.key
 # don't know why this being ignore, so I add it here
 !server.example.key
+
+*copy.ts
+*copy.js

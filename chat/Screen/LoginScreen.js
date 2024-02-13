@@ -1,13 +1,21 @@
 import { KeyboardAvoidingView, StyleSheet, Text, View } from 'react-native'
 import { Button,Input } from '@rneui/base'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 const LoginScreen = ({ navigation }) => {
-
+  
   const [secretCode, setSecretCode] = useState('')
-
-  const test = () => {
-    alert('test <3')
+  
+  useEffect(() => {
+    let chatActive = localStorage.getItem('TECHPORN_CHAT_ACTIVE');
+    if (chatActive) {
+      navigation.navigate('Chat', {secretCode: ''});
+    }
+  }, [navigation])
+  
+  const join = (secretCode) => {
+    navigation.navigate('Chat', {secretCode});
+    setSecretCode('');
   }
 
   return (
@@ -20,14 +28,16 @@ const LoginScreen = ({ navigation }) => {
       <Button
         style={styles.button}
         onPress={() => {
-          navigation.navigate('Chat', {secretCode});
-          setSecretCode('');
+          join(secretCode);
+          // navigation.navigate('Chat', {secretCode});
+          // setSecretCode('');
         }}
         title='使用密語' />
       <Button
         style={styles.button}
         onPress={() => {
-          navigation.navigate('Chat', {secretCode: ''});
+          join(secretCode);
+          // navigation.navigate('Chat', {secretCode: ''});
         }}
         title='開始聊天' />
     </KeyboardAvoidingView>

@@ -43,8 +43,9 @@ class WebSocketServer {
         this.io.on('connection', (socket: typeof Socket) => {
             socket.emit('connected', `${socket.id}`);
             // socket.on('joinRoom', (userid: string) => this.joinRoom(socket, userid));
-            socket.on('joinRoom/v2', (joinParams: { id: string, session: string, secretcode: string }) => this.joinRoomV2(socket, joinParams.id, joinParams) )
-            socket.on('sendMessage', (message: string) => this.sendMessage(socket, message));
+            socket.on('joinRoom/v2', (joinParams: { id: string, session: string, secretcode: string }) => this.joinRoomV2(socket, joinParams) )
+            socket.on('sendMessage', (message: { session: string, msg: string }) => this.sendMessage(socket, message));
+            socket.on('leave', (session: string) => this.leaveChat(socket, session)) ;   
             socket.on('disconnect', () => this.disconnect(socket));
         });
     }
@@ -54,151 +55,117 @@ class WebSocketServer {
             join: (arg0: string) => void; 
             emit: (arg0: string, arg1: { text: string; ready: boolean; }) => void;
         },
-        socketID: string,
+        // socketID: string,
         joinParams: { id: string, session: string, secretcode: string }
     ): Promise<void> {
-        // console.log(`secretjoin: `, joinParams);
         console.log(`joinParams: `, joinParams);
+
+        const { id, session, secretcode } = joinParams;
+        const sessionKey = `chatSession:${session}`
+        $redis.rPush(session, id);
         let joined = false;
 
-        $redis.set(socketID, joinParams.session);
+        let joinedRoom = await $redis.get(sessionKey);
 
-        let chatRoom = await $redis.get(joinParams.session).catch((err: any) => console.log(`joinRoomV2(), $redis.getRoom err: `, err) );
-        console.log(`chatRoom get: `, chatRoom)
-        /** 
-         * 這邊在查找的時候，如果有找到房間，並且ready狀態為true，表示有成功配對
-         * 但如果users.length < 1，表示配對的user已經離開，需要重新配對
-         */
-        if (chatRoom !== null && chatRoom !== undefined) {
-            let chatHistory = await $redis.get(chatRoom).catch((err: any) => console.log(`joinRoomV2(), $redis.getHistory err: `, err) );
-            console.log(`chatHistory: `, chatHistory);
-
-            if (chatHistory.ready && chatHistory.users.length < 1) {
-                $redis.del(chatRoom);
-                $redis.del(joinParams.session);
-            }
-
-            if (!chatHistory.ready) {
-                socket.join(chatRoom);
-                let reJoinParams = {
-                    ready: false,
-                    users: [joinParams.session],
-                    text: chatHistory.text
+        if (!joinedRoom) {
+            let NjoinedRoom;
+            if (secretcode === '') {
+                for (let [roomname, room] of this.chatrooms) {
+                    if (!room.roomfull && !room.secret) {
+                        NjoinedRoom = roomname;
+                        $redis.set(id, sessionKey);
+                        $redis.set(sessionKey, roomname);
+                        room.users.push(sessionKey);
+                        room.roomfull = true;
+                        socket.join(roomname);
+                        this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
+                        // for test
+                        socket.emit('test', { text: `roomname: ${roomname}`, ready: true });
+                        joined = true;
+    
+                        break;
+                    }
                 }
-                socket.emit('reJoin', reJoinParams);
-
+                if (!joined) {
+                    let roomname = uuidv4();
+                    NjoinedRoom = roomname;
+                    $redis.set(id, sessionKey);
+                    $redis.set(sessionKey, roomname);
+                    this.chatrooms.set(roomname, {
+                        secret: secretcode !== '' ? true : false,
+                        roomfull: false,
+                        users: [sessionKey]
+                    });
+                    socket.join(roomname);
+                    socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
+                    // for test
+                    socket.emit('test', { text: `roomname: ${roomname}`, ready: true });
+                }
             }
             else {
-                let users = JSON.parse(chatHistory.users);
-                let reJoinParams = {
-                    ready: true,
-                    users: [...users, joinParams.session],
-                    text: chatHistory
+                NjoinedRoom = secretcode;
+                for (let [roomname, room] of this.chatrooms) {
+                    if (roomname === secretcode && !room.roomfull) {
+                        $redis.set(id, sessionKey);
+                        $redis.set(sessionKey, roomname);
+                        room.users.push(sessionKey);
+                        room.roomfull = true;
+                        socket.join(roomname);
+                        this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
+                        // for test
+                        socket.emit('test', { text: `roomname: ${roomname}`, ready: true });
+                        joined = true;
+    
+                        break;    
+                    }
+                    else if (roomname === secretcode && room.roomfull) {
+                        socket.emit('joinedRoomFull', { text: '房間已滿', ready: false });
+                        // for test
+                        socket.emit('test', { text: `roomname: ${roomname}`, ready: true });
+                        joined = true;
+                        break;
+                    }
+                }
+                if (!joined) {
+                    let roomname = secretcode;
+                    $redis.set(id, sessionKey);
+                    $redis.set(sessionKey, roomname);
+                    this.chatrooms.set(roomname, {
+                        secret: secretcode !== '' ? true : false,
+                        roomfull: false,
+                        users: [sessionKey]
+                    });
+                    socket.join(roomname);
+                    socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
+                    // for test
+                    socket.emit('test', { text: `roomname: ${roomname}`, ready: true });
+    
                 }
     
-                this.chatrooms.set(chatRoom, {
-                    secret: joinParams.secretcode !== '' ? true : false,
-                    roomfull: true,
-                    users: [...users, joinParams.session]
-                })
-                socket.join(chatRoom);
-                socket.emit('reJoin', reJoinParams);
             }
-            return;
+            console.log(`sessionKey !exist : ${NjoinedRoom}`);
+        }
+        else {
+            let roomStatus = this.chatrooms.get(joinedRoom) || { roomfull: false };
+            console.log(`roomStatus: `, roomStatus); 
+            $redis.set(id, sessionKey);
+            console.log(`sessionKey exist : ${joinedRoom}`);
+            socket.join(joinedRoom);
+            let chatHistory =
+                await $redis.LRANGE(`roomMSG:${joinedRoom}`, 0, -1)
+                    .then((msg: any) => {
+                        console.log(`msg in redis: `, msg)
+                        const msgArr = msg.map((msg: string ) => JSON.parse(msg))
+                        return msgArr;
+                    })
+                    .catch((err: any) => console.log(`error: ${err}`));
+            console.log(`chatHistory: `,chatHistory);
+            socket.emit('reJoin', { text: JSON.stringify(chatHistory), ready: roomStatus.roomfull });
         }
 
-        if (this.chatrooms.size === 0) {
-            let roomname = joinParams.secretcode !== '' ? joinParams.secretcode : uuidv4();
 
-            this.chatrooms.set(roomname, {
-                secret: joinParams.secretcode !== '' ? true : false,
-                roomfull: false,
-                users: [joinParams.session]
-            })
-            
-            socket.join(roomname);
-            $redis.set(joinParams.session, roomname);
-            let roomStatus = {
-                ready: false,
-                users: [joinParams.session],
-                text: []
-            }
-            $redis.set(roomname, JSON.stringify(roomStatus));
-            socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
-        } else {
-            if (joinParams.secretcode === '') {
-                for (let [roomname, room] of this.chatrooms) {
-                    if (room.users.length === 1 && !room.roomfull && !room.secret) {
-                        room.users.push(socketID);
-                        room.roomfull = true;
-                        socket.join(roomname);
-                        $redis.set(joinParams.session, roomname);
-                        let roomStatus = {
-                            ready: true,
-                            users: [...room.users, joinParams.session],
-                            text: []
-                        }
-                        $redis.set(roomname, JSON.stringify(roomStatus));
-                        
-                        this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
-                        joined = true;
-                        break;
-                    }
-                }
-            }
-            else {
-                for (let [roomname, room] of this.chatrooms) {
-                    if (roomname === joinParams.secretcode && room.roomfull) {
-                        socket.emit('joinedRoomFull', { text: '滿員', ready: false });
-                        joined = true;
-                        break;
-                    }
-                    if (roomname === joinParams.secretcode && room.users.length === 1 && !room.roomfull) {
-                        room.users.push(socketID);
-                        room.roomfull = true;
-                        socket.join(roomname);
-                        $redis.set(joinParams.session, roomname);
-                        let roomStatus = {
-                            ready: true,
-                            users: [...room.users, joinParams.session],
-                            text: []
-                        }
-                        $redis.set(roomname, JSON.stringify(roomStatus));
-
-                        this.io.to(roomname).emit('joinedRoom', { text: '對方已經加入', ready: true });
-                        joined = true;
-                        break;
-                    }
-                    else if (roomname === joinParams.secretcode && room.users.length === 1 && room.roomfull) {
-                        socket.emit('joinedRoom', { text: '房間已滿', ready: false });
-                        joined = true;
-                        break;
-                    }
-                }
-            }
-                
-            if (!joined) {
-                const newRoomName = joinParams.secretcode !== '' ? joinParams.secretcode : uuidv4();
-                this.chatrooms.set(newRoomName, {
-                    secret: joinParams.secretcode !== '' ? true : false,
-                    roomfull: false,
-                    users: [joinParams.session]
-                })
-                socket.join(newRoomName);
-                $redis.set(joinParams.session, newRoomName);
-                let roomStatus = {
-                    ready: false,
-                    users: [joinParams.session],
-                    text: []
-                }
-                $redis.set(newRoomName, JSON.stringify(roomStatus));
-
-                socket.emit('joinedRoom', { text: '等待對方加入', ready: false });
-            }
-            else {
-
-            }
-        }
+        console.log(`redis session:${session} data\n`, await $redis.lRange(session, 0, -1))
+        console.log(`chatrooms data: `, this.chatrooms)
 
     }
     
@@ -212,28 +179,76 @@ class WebSocketServer {
             broadcast: {
                 to: (arg0: string) => { (): any; new(): any; emit: { (arg0: string, arg1: any): void; new(): any; }; }; };
             },
-        message: any)
+        message: {
+            session: string;
+            msg: string;
+        })
     : Promise<void> {
-        for (let [roomname, room] of this.chatrooms) {
-            if (room.users.includes(socket.id)) {
-                console.log(`from: ${message.id}, to: ${roomname}, msg: ${message}`)
-                let params = {
-                    text: message.msg,
-                    id: message.id
-                }
-                socket.broadcast.to(roomname).emit('getMessage', params);
-
-                let chatHistory = await $redis.get(roomname).catch((err: any) => console.log(`sendMessage(), $redis.getHistory err: `, err) );
-                chatHistory = chatHistory === null ? [] : JSON.parse(chatHistory);
-                chatHistory.push(params);
-                $redis.set(roomname, JSON.stringify(chatHistory));
-
-                console.log(`setnMessage() chatHistory:\nroom: ${roomname}\n`, await $redis.get(roomname));
-                break;
+        let userSession = message.session;
+        let roomname = await $redis.get(`chatSession:${userSession}`)
+        if (roomname) {
+            let msg = {
+                session: userSession,
+                msg: message.msg,
+                timestamp: new Date().toISOString(),
             }
+            $redis.rPush(`roomMSG:${roomname}`, JSON.stringify(msg));
+            socket.broadcast.to(roomname).emit(`getMessage`, msg);
+            let chatHistory = await $redis.LRANGE(`roomMSG:${roomname}`, 0, -1)
+            console.log(`chatHistory: ${chatHistory}`);
         }
+        // for (let [roomname, room] of this.chatrooms) {
+        //     if (room.users.includes(socket.id)) {
+        //         console.log(`from: ${message.session}, to: ${roomname}, msg: ${message}`)
+        //         let params = {
+        //             text: message.msg,
+        //             id: message.session
+        //         }
+        //         socket.broadcast.to(roomname).emit('getMessage', params);
+
+        //         break;
+        //     }
+        // }
     }
     
+    private async leaveChat(
+        socket: {
+            id: string;
+            broadcast: {
+                to: (arg0: string) => {
+                    (): any;
+                    new(): any;
+                    emit: {
+                        // (arg0: string,arg1: string): void;
+                        (arg0: string,arg1: any): void;
+                        new(): any; 
+                    };
+                };
+            };
+            leave: (arg0: string) => void;
+            emit: (arg0: string, arg1: string) => void;
+        },
+        session: string
+    ): Promise<void> {
+        console.log(`on leave... ${session}`)
+        let roomname = await $redis.get(`chatSession:${session}`)
+        console.log(`leave roomname: ${roomname}`)
+        if (roomname) {
+            let msg = {
+                session: session,
+                msg: '對方已經離開',
+            }
+            // socket.broadcast.to(roomname).emit('userDisconnect', '對方已經離開');
+            socket.broadcast.to(roomname).emit('userDisconnect', msg);
+            socket.leave(roomname);
+            $redis.del(`chatSession:${session}`);
+            $redis.del(`roomMSG:${roomname}`);
+            let chatHistory = await $redis.LRANGE(`roomMSG:${roomname}`, 0, -1)
+            console.log(`chatHistory: ${chatHistory}`);
+            this.chatrooms.delete(roomname);
+        }
+    }
+
     /**
      * on disconnect, remove user from chatroom and delete chatroom if empty
      */
@@ -252,37 +267,25 @@ class WebSocketServer {
             };
         }
     ): Promise<void> {
-        console.log(`\nsocket.id: ${JSON.stringify(socket.id)}`);
-        let found = false;
-        let userSession = await $redis.get(socket.id)
-        // console.log(`userSession: ${userSession}`);
-        let userRoom = await $redis.get(userSession);
-        // console.log(`userRoom: ${userRoom}`);
-        let chatHistory = await $redis.get(userRoom);
-        // console.log(`chatHistory: ${chatHistory}`);
+        
+        let session = await $redis.get(socket.id);
+        session = session.replace('chatSession:', '');
+        console.log(`on disconnect... ${session}`)
+        $redis.lRem(session, 1, socket.id);
+        console.log(`redis session:${session} data\n`, await $redis.lRange(session, 0, -1))
+        // let roomname = await $redis.get(session)
 
-        for (let [roomname, room] of this.chatrooms) {
-            
-            const idx = room.users.indexOf(userSession);
+        // const idx = this.chatrooms.get(roomname)?.users.indexOf(session);
+        // if (idx !== undefined && idx !== -1) {
+        //     this.chatrooms.get(roomname)?.users.splice(idx, 1);
+        // }
+        // if (this.chatrooms.get(roomname)?.users.length === 0) {
+        //     this.chatrooms.delete(roomname);
+        // }
+        // $redis.del(socket.id);
+        // $redis.del(`chatSession:${session}`);
 
-            if (idx !== -1) {
-            // if (room.users.includes(socket.id)) {
-                // room.users.splice(room.users.indexOf(socket.id), 1);
-                room.users.splice(idx, 1);
-                if (room.users.length === 0) {
-                    this.chatrooms.delete(roomname);
-                    $redis.del(userRoom);
-                    $redis.del(userSession);
-                    $redis.del(socket.id);
-                }
-                socket.broadcast.to(roomname).emit('userDisconnect', '對方已經離開');
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            console.log(`未找到user:[${userSession.id}]的房間`);
-        }
+        // console.log(`chatrooms data: `, this.chatrooms)
     }
 }
 

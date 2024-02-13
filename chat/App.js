@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 
 import LoginScreen from './Screen/LoginScreen';
 import ChatScreen from './Screen/ChatScreen';
+// import { AuthProvider } from './context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
@@ -18,17 +19,19 @@ const globalScreenOptions = {
 
 export default function App({navigation}) {
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={globalScreenOptions}>
-        <Stack.Screen name='配對聊天' component={LoginScreen} />
-        <Stack.Screen
-          name='Chat'
-          component={ChatScreen}
-          options={{
-            title:'開始聊天'
-          }}/>
-      </Stack.Navigator>
-    </NavigationContainer>
+    // <AuthProvider>
+      <NavigationContainer>
+        <Stack.Navigator screenOptions={globalScreenOptions}>
+          <Stack.Screen name='配對聊天' component={LoginScreen} />
+          <Stack.Screen
+            name='Chat'
+            component={ChatScreen}
+            options={{
+              title:'開始聊天'
+            }}/>
+        </Stack.Navigator>
+      </NavigationContainer>
+    // </AuthProvider>
   );
 }
 
