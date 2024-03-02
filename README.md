@@ -63,8 +63,8 @@ npm run dev
 2. Navigate to the server directory.
 3. Build and run Docker image:
 ```bash
-docker build -t chatapp-server .
-docker run -t -p 3100:3100 chatapp-server
+docker build -t chat-app -f Dockerfile .
+docker run -d -p 19000:19000 -p 19001:19001 -p 19002:19002 -p 19006:19006 -p 4100:4100 --name chat-app chat-app
 ```
 
 ## React-Native Expo (RN Expo)
