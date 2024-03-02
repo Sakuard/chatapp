@@ -5,13 +5,16 @@ const { Server,Socket } = require('socket.io');
 const { v4: uuidv4 } = require('uuid');
 
 const redis = require('redis');
-const $redis = redis.createClient({ url: process.env.REDIS_SERVER });
-$redis.on('error', (err:any) => console.log('Redis Client Error', err));
-$redis.connect().then(async() => {
-    console.log(`Redis Ready`)
+// const $redis = redis.createClient({ url: process.env.REDIS_SERVER });
+// $redis.on('error', (err:any) => console.log('Redis Client Error', err));
+// $redis.connect().then(async() => {
+//     console.log(`Redis Ready`)
 
-    $redis.flushAll();
-});
+//     $redis.flushAll();
+// });
+// const $redis = require('../cache.js');
+const $redis = require('./cache.js');
+
 
 interface ChatRoom {
     secret: boolean;
@@ -66,7 +69,6 @@ class WebSocketServer {
         let joined = false;
 
         let joinedRoom = await $redis.get(sessionKey);
-
         if (!joinedRoom) {
             let NjoinedRoom;
             if (secretcode === '') {
@@ -143,30 +145,23 @@ class WebSocketServer {
                 }
     
             }
-            console.log(`sessionKey !exist : ${NjoinedRoom}`);
         }
         else {
             let roomStatus = this.chatrooms.get(joinedRoom) || { roomfull: false };
-            console.log(`roomStatus: `, roomStatus); 
             $redis.set(id, sessionKey);
-            console.log(`sessionKey exist : ${joinedRoom}`);
             socket.join(joinedRoom);
             let chatHistory =
                 await $redis.LRANGE(`roomMSG:${joinedRoom}`, 0, -1)
                     .then((msg: any) => {
-                        console.log(`msg in redis: `, msg)
                         const msgArr = msg.map((msg: string ) => JSON.parse(msg))
+                        console.log(`chatHistory: `, msgArr)
                         return msgArr;
                     })
                     .catch((err: any) => console.log(`error: ${err}`));
-            console.log(`chatHistory: `,chatHistory);
             socket.emit('reJoin', { text: JSON.stringify(chatHistory), ready: roomStatus.roomfull });
         }
 
-
-        console.log(`redis session:${session} data\n`, await $redis.lRange(session, 0, -1))
-        console.log(`chatrooms data: `, this.chatrooms)
-
+        // console.log(`chatrooms data: `, this.chatrooms)
     }
     
     /**
@@ -192,23 +187,10 @@ class WebSocketServer {
                 msg: message.msg,
                 timestamp: new Date().toISOString(),
             }
-            $redis.rPush(`roomMSG:${roomname}`, JSON.stringify(msg));
+            await $redis.rPush(`roomMSG:${roomname}`, JSON.stringify(msg));
             socket.broadcast.to(roomname).emit(`getMessage`, msg);
             let chatHistory = await $redis.LRANGE(`roomMSG:${roomname}`, 0, -1)
-            console.log(`chatHistory: ${chatHistory}`);
         }
-        // for (let [roomname, room] of this.chatrooms) {
-        //     if (room.users.includes(socket.id)) {
-        //         console.log(`from: ${message.session}, to: ${roomname}, msg: ${message}`)
-        //         let params = {
-        //             text: message.msg,
-        //             id: message.session
-        //         }
-        //         socket.broadcast.to(roomname).emit('getMessage', params);
-
-        //         break;
-        //     }
-        // }
     }
     
     private async leaveChat(
@@ -230,9 +212,8 @@ class WebSocketServer {
         },
         session: string
     ): Promise<void> {
-        console.log(`on leave... ${session}`)
         let roomname = await $redis.get(`chatSession:${session}`)
-        console.log(`leave roomname: ${roomname}`)
+        let chatSession = `chatSession:${session}`
         if (roomname) {
             let msg = {
                 session: session,
@@ -241,11 +222,13 @@ class WebSocketServer {
             // socket.broadcast.to(roomname).emit('userDisconnect', '對方已經離開');
             socket.broadcast.to(roomname).emit('userDisconnect', msg);
             socket.leave(roomname);
-            $redis.del(`chatSession:${session}`);
-            $redis.del(`roomMSG:${roomname}`);
-            let chatHistory = await $redis.LRANGE(`roomMSG:${roomname}`, 0, -1)
-            console.log(`chatHistory: ${chatHistory}`);
+            await $redis.del(`chatSession:${session}`);
+            await $redis.del(`roomMSG:${roomname}`);
+            await $redis.del(session);
+            // let chatHistory = await $redis.LRANGE(`roomMSG:${roomname}`, 0, -1)
+
             this.chatrooms.delete(roomname);
+            // console.log(`chatrooms data: `, this.chatrooms)
         }
     }
 
@@ -269,23 +252,10 @@ class WebSocketServer {
     ): Promise<void> {
         
         let session = await $redis.get(socket.id);
-        session = session.replace('chatSession:', '');
-        console.log(`on disconnect... ${session}`)
-        $redis.lRem(session, 1, socket.id);
-        console.log(`redis session:${session} data\n`, await $redis.lRange(session, 0, -1))
-        // let roomname = await $redis.get(session)
-
-        // const idx = this.chatrooms.get(roomname)?.users.indexOf(session);
-        // if (idx !== undefined && idx !== -1) {
-        //     this.chatrooms.get(roomname)?.users.splice(idx, 1);
-        // }
-        // if (this.chatrooms.get(roomname)?.users.length === 0) {
-        //     this.chatrooms.delete(roomname);
-        // }
-        // $redis.del(socket.id);
-        // $redis.del(`chatSession:${session}`);
-
-        // console.log(`chatrooms data: `, this.chatrooms)
+        if (session) {
+            session = session.replace('chatSession:', '');
+            $redis.lRem(session, 1, socket.id);
+        }
     }
 }
 

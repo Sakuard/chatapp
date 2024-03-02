@@ -5,13 +5,17 @@ import { v4 as uuidv4 } from 'uuid';
 import { socketURL } from './esmConfig';
 import CrytpoJS from 'crypto-js';
 
+// import { Constants } from 'expo-constants';
+
+// const socketURLenv = Constants.manifest.extra.EXPO_PUBLIC_SOCKETURL;
+console.log(`socketURL from @env: `, process.env.EXPO_PUBLIC_SOCKETURL);
+
 class SocketClient {
 
-    /**
-     * Constructs a SocketClient.
-     */
     constructor() {
-        this.socket = io(socketURL, { transports: ['websocket'] });
+        console.log(`url: ${socketURL}`);
+        const url = socketURL;
+        this.socket = io(url, { transports: ['websocket'] });
     }
 
     /**
@@ -24,7 +28,6 @@ class SocketClient {
      */
     connect(sessionID, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull) {
         // here, i want to add a localstorage for 
-        console.log(`passed in ID: ${sessionID}`)
         this.socket.on('connected', () => {
             // this.socket.emit('joinRoom', this.socket.id);
             let joinParams = this.paramsGen(this.socket.id, secretCode, sessionID);
@@ -32,13 +35,11 @@ class SocketClient {
         });
 
         this.socket.on('reJoin', data => {
-            console.log(`reJoin: ,`, data)
             setChatReady(data.ready);
             if (data.ready) {
                 setIsConnected(true);
             }
             let chatMsg = JSON.parse(data.text);
-            console.log(`chatMsg from reJoin: `, chatMsg);
             if (chatMsg.length > 0) {
                 for (const msg of chatMsg) {
                     setMessages(prevMessages => [...prevMessages, { msg: msg.msg, session: msg.session}])
@@ -52,23 +53,22 @@ class SocketClient {
             if (text.ready) {
                 setIsConnected(true);
             }
-            console.log(`joinedRoom: ${JSON.stringify(text)}`)
         });
 
         this.socket.on('getMessage', message => {
-            console.log(`getMessage: `, message)
             setMessages(prevMessages => [...prevMessages, { msg: message.msg, session:message.session, received: true }]);
         });
 
         this.socket.on('userDisconnect', message => {
-            console.log(`userDisconnect: `, message)
+            let session = localStorage.getItem('TECHPORN_CHAT_USER');
             setMessages(prevMessages => [...prevMessages, { msg: message.msg, session: message.session, received: true }]);
             setIsConnected(false);
             localStorage.removeItem('TECHPORN_CHAT_ACTIVE');
+            this.socket.emit('leave', session);
+
         });
 
         this.socket.on('test', data => {
-            console.log(`test data: `, data)
         })
 
         this.socket.on('joinedRoomFull', text => {
@@ -79,7 +79,6 @@ class SocketClient {
 
     disconnect(sessionid) {
         // this.socket.disconnect();
-        console.log(`leave session: `, sessionid)
         this.socket.emit('leave', sessionid);
     }
 
@@ -99,12 +98,10 @@ class SocketClient {
      */
     paramsGen(socketid, secretcode, session) {
         let hashed = CrytpoJS.SHA256(secretcode).toString(CrytpoJS.enc.Hex);
-        console.log(`hashed: ${hashed}`)
-        console.log(`typeof hashed: ${typeof hashed}`)
         return {
             id: socketid,
             session: session,
-            secretcode: hashed
+            secretcode: secretcode !== '' ? hashed : ''
         }
 
     }
