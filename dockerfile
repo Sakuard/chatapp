@@ -3,6 +3,7 @@ FROM node:20.11.0-alpine3.19 as chat-app-builder
 WORKDIR /usr/src/app/chat
 COPY chat/package.json .
 RUN npm i --unsafe-perm --allow-root -g npm@latest expo-cli@latest && yarn install
+# RUN npx expo build:web
 COPY chat/ .
 
 # 構建 chat-server 的階段

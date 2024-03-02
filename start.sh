@@ -5,4 +5,6 @@ PORT=4100 node index.js &
 
 # 啟動 chat-app
 cd /usr/src/app/chat
-PORT=19006 npx expo start --web
+# PORT=19006 npx expo start --web
+expo build:web
+npx serve web-build -p 19006
