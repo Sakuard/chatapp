@@ -10,12 +10,18 @@ COPY chat/ .
 FROM node:18-alpine as chat-server-builder
 WORKDIR /usr/src/app/server
 COPY server/package*.json ./
-RUN npm install
+RUN npm install && npm install -g typescript
 COPY server/ .
+RUN tsc
 
 # 運行階段
 FROM node:18-alpine
 WORKDIR /usr/src/app
+
+WORKDIR /usr/src/app/nginx
+RUN mkdir -p /run/nginx
+RUN apk update && apk add --no-cache nginx
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
 # 複製 chat-app 構建的文件
 COPY --from=chat-app-builder /usr/src/app/chat /usr/src/app/chat
@@ -31,7 +37,8 @@ ENV NODE_ENV production
 ENV PORT 19006
 
 # 開放端口
-EXPOSE 19000 19001 19002 19006 4100
+# EXPOSE 19000 19001 19002 19006 4100 80
+EXPOSE 19006 4100 80
 
 # 啟動服務
 CMD ["/usr/src/app/start.sh"]

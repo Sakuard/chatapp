@@ -34,7 +34,12 @@ class WebSocketServer {
     constructor(server: typeof http.Server | typeof https.Server, corsOptions: { origin: string | string[] }) {
 
         /** @type {Server} io - The Socket.IO server instance. */
-        this.io = new Server(server, { cors: corsOptions });
+        this.io = new Server(
+            server,
+            {
+                cors: corsOptions,
+                path: '/websocket'
+            });
 
         /** @type {Map.<String, {roomfull: boolean, users: Array.<String>}>} chatrooms - chatroom map */
         this.chatrooms = new Map<string, ChatRoom>();

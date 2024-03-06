@@ -1,4 +1,4 @@
-export const socketURL='http://localhost:port'
+export const socketURL='http://ip:port'
 
 export const TITLE_BG_COLOR = '#0f3219'
 export const BG_COLOR = '#32503c'

@@ -15,7 +15,8 @@ class SocketClient {
     constructor() {
         console.log(`url: ${socketURL}`);
         const url = socketURL;
-        this.socket = io(url, { transports: ['websocket'] });
+        // this.socket = io(url, { transports: ['websocket'] });
+        this.socket = io(url, { path: '/websocket' });
     }
 
     /**
