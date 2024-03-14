@@ -12,7 +12,7 @@ sleep 5
 # 启动 chat-app
 cd /usr/src/app/chat
 echo "Building and starting chat-app..."
-expo build:web
+npx expo build:web
 npx serve web-build -p 19006 &
 
 # 等待chat-app构建并启动

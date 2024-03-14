@@ -5,6 +5,7 @@ COPY chat/package.json .
 RUN npm i --unsafe-perm --allow-root -g npm@latest expo-cli@latest && yarn install
 # RUN npx expo build:web
 COPY chat/ .
+RUN npx expo export:web
 
 # 構建 chat-server 的階段
 FROM node:18-alpine as chat-server-builder
@@ -38,7 +39,7 @@ ENV PORT 19006
 
 # 開放端口
 # EXPOSE 19000 19001 19002 19006 4100 80
-EXPOSE 19006 4100 80
+EXPOSE 80
 
 # 啟動服務
 CMD ["/usr/src/app/start.sh"]
