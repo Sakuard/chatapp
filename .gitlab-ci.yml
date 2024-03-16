@@ -8,8 +8,6 @@ workflow:
       when: always
     - when: never
 
-before_script:
-  - cat $GCP_SA_KEY > /tmp/credentials.json
 
 build/docker-build-to-GCP:
   stage: build
@@ -17,6 +15,7 @@ build/docker-build-to-GCP:
   services:
     - docker:dind
   before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
     - cp chat/esmConfig.example.js chat/esmConfig.js 
     - sed -i "s|'http://ip:port'|'https://chat-backend-uatywyr3ha-de.a.run.app'|" chat/esmConfig.js 
     
@@ -41,6 +40,9 @@ deploy:
   stage: deploy
   variables:
     GOOGLE_APPLICATION_CREDENTIALS: "/tmp/credentials.json"
+  before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
+    
   script:
     - cd terraform/cloud_run
     - terraform init
