@@ -20,4 +20,5 @@ echo "Waiting for chat-app to build and start..."
 
 # 启动 nginx
 echo "Starting Nginx..."
+lsof | grep TCP
 nginx -g 'daemon off;'
