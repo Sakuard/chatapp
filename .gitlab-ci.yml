@@ -1,3 +1,9 @@
+image:
+  name: hashicorp/terraform:1.7
+  entrypoint:
+    - "/usr/bin/env"
+    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 stages:
   - build-registry
   - build-app   # next build and docker image build
