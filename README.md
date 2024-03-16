@@ -65,7 +65,7 @@ npm run dev
 ```bash
 # docker buildx build --platform linux/amd64 -t chat-app -f Dockerfile . 
 docker build -t chat-app -f Dockerfile .
-docker run -d 80:80 --name chat-app chat-app
+docker run -p 80:80 --name chat-app chat-app
 ```
 
 ## React-Native Expo (RN Expo)
