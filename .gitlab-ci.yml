@@ -1,5 +1,6 @@
 stages:
-  - build   # next build and docker image build
+  - build-registry
+  - build-app   # next build and docker image build
   - deploy
 
 workflow:
@@ -8,9 +9,25 @@ workflow:
       when: always
     - when: never
 
+build-registry:
+  stage: build-registry
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: "/tmp/credentials.json"
+  before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
 
-build/docker-build-to-GCP:
-  stage: build
+  script:
+    - cd terraform/artifact_registry
+    - terraform init
+    - terraform apply -auto-approve -var-file="../variables.tfvars"
+  # deprecated
+  only:
+    refs:
+      - main
+
+
+build-app/docker-build-to-GCP:
+  stage: build-app
   image: docker
   services:
     - docker:dind
@@ -42,7 +59,7 @@ deploy:
     GOOGLE_APPLICATION_CREDENTIALS: "/tmp/credentials.json"
   before_script:
     - cat $GCP_SA_KEY > /tmp/credentials.json
-    
+
   script:
     - cd terraform/cloud_run
     - terraform init
