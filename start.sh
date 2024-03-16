@@ -17,6 +17,7 @@ npx serve web-build -p 19006 &
 
 # 等待chat-app构建并启动
 echo "Waiting for chat-app to build and start..."
+sleep 10
 
 # 启动 nginx
 echo "Starting Nginx..."
