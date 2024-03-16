@@ -40,7 +40,7 @@ build-app/docker-build-to-GCP:
   before_script:
     - cat $GCP_SA_KEY > /tmp/credentials.json
     - cp chat/esmConfig.example.js chat/esmConfig.js 
-    - sed -i "s|'http://ip:port'|'https://chat-backend-uatywyr3ha-de.a.run.app'|" chat/esmConfig.js 
+    - sed -i "s|'http://ip:port'|'https://imposing-quasar-341914-chat-backend-chat-app-uatywyr3ha-de.a.run.app'|" chat/esmConfig.js 
     
   script:
     - echo "[BUILD STAGE] Run docker build and Push the image to docker register in gitlab"

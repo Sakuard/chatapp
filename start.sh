@@ -7,6 +7,7 @@ PORT=4100 node index.js &
 
 # 等待chat-server启动
 echo "Waiting for chat-server to start..."
+sleep 10
 
 # 启动 chat-app
 cd /usr/src/app/chat
