@@ -41,11 +41,13 @@ build-app/docker-build-to-GCP:
     - cat $GCP_SA_KEY > /tmp/credentials.json
     - cp chat/esmConfig.example.js chat/esmConfig.js 
     - sed -i "s|'http://ip:port'|'https://imposing-quasar-341914-chat-backend-chat-app-uatywyr3ha-de.a.run.app'|" chat/esmConfig.js 
-    
+    - echo "chat/esmConfig.js :"
+    - cat chat/esmConfig.js 
+
   script:
     - echo "[BUILD STAGE] Run docker build and Push the image to docker register in gitlab"
     - echo "Build Docker Image"
-    - docker build -t chat-app -f Dockerfile .
+    - docker buildx build --platform linux/amd64 -t chat-app -f Dockerfile .
 
     - echo "Push Docker Image"
     - sed '/^#/d;s/ = /=/;s/"//g' "terraform/variables.tfvars" > temp_file
