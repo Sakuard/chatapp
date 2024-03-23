@@ -68,6 +68,13 @@ docker build -t chat-app -f Dockerfile .
 docker run -p 80:80 --name chat-app chat-app
 ```
 
+## Service Setup
+- **2024/02**
+- ✅ **Dockerize**:
+- **2024/03**
+- ✅ **Nginx**: url proxy route.
+
+
 ## React-Native Expo (RN Expo)
 - ✅ **Start Page**: Only a "Start Chat" button.
 - ✅ **Chat Message Page**: Text box, button, and chat area.

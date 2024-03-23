@@ -32,6 +32,7 @@ export const TextContainer = styled.div`
 export const MessageContainer = styled.div`
     flex: 1;
     justify-content: center;
+    max-width: 100%;
 `
 export const ChatInputBox = styled.div`
     display: flex;
