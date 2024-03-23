@@ -17,6 +17,7 @@ const ChatScreen = ({ navigation, route }) => {
     const [isSecretFull, setIsSecretFull] = useState(false);
     const [chatSession, setChatSession] = useState('');
     const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+    const [screenHeight, setScreenHeight] = useState(Dimensions.get('window').height);
     const [useKeyin, setUseKeyin] = useState(false);
 
     const [backDialog, setBackDialog] = useState(false);
@@ -24,6 +25,7 @@ const ChatScreen = ({ navigation, route }) => {
     const [keyin, setKeyin] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     // const screenWidth = Dimensions.get('window').width;
+    // console.log(`height: `, screenHeight)
     
     const socketClientRef = useRef(null);
     const scrollRef = useRef();
@@ -64,7 +66,9 @@ const ChatScreen = ({ navigation, route }) => {
         
         const onChange = () => {
             const width = Dimensions.get('window').width;
+            const height = Dimensions.get('window').height;
             setScreenWidth(width);
+            setScreenHeight(height);
         }
         Dimensions.addEventListener('change', onChange);
 
@@ -99,12 +103,12 @@ const ChatScreen = ({ navigation, route }) => {
         if (message !== '' && !keyin) {
             setKeyin(true);
             socketClientRef.current.keyin(session)
-            console.log(`key in`)
+            // console.log(`key in`)
         }
         if (message === '') {
             setKeyin(false);
             socketClientRef.current.keyout(session)
-            console.log(`key out`)
+            // console.log(`key out`)
         }
 
     },[message,keyin])
@@ -209,7 +213,7 @@ const ChatScreen = ({ navigation, route }) => {
                     {/* <ScrollView style={styles.scrollView}> */}
                     <S.MessageContainer>
                         {/* <ScrollView style={{ flex: 1,height: '82vh' }}> */}
-                        <ScrollView ref={scrollRef} style={{ flex: 1,height: '82vh' }}>
+                        <ScrollView ref={scrollRef} style={{height: screenHeight-165}}>
                             {messages.map((msg, idx) => (
                                 <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
                                     <Text>{msg.msg}</Text>
@@ -324,7 +328,7 @@ const styles = StyleSheet.create({
         flexWrap: 'nowrap', // 防止換行
     },
     inputField: {
-        backgroundColor: '#333',
+        backgroundColor: '#666',
         borderRadius: 5,
         padding: 10,
         marginLeft: 10,
