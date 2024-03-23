@@ -1,6 +1,6 @@
 location = "asia-east1"
 project = "imposing-quasar-341914"
 image = "asia-east1-docker.pkg.dev/imposing-quasar-341914/imposing-quasar-341914-chat-backend/chat-app"
-image_tag = "0.0.1"
+image_tag = "0.0.2"
 repo = "chat-backend"
 cloud_run_bucket = "cloud_run_bucket"
