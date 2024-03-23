@@ -1,0 +1,81 @@
+image:
+  name: hashicorp/terraform:1.7
+  entrypoint:
+    - "/usr/bin/env"
+    - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+stages:
+  - build-registry
+  - build-app   # next build and docker image build
+  - deploy
+
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: always
+    - when: never
+
+build-registry:
+  stage: build-registry
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: "/tmp/credentials.json"
+  before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
+
+  script:
+    - cd terraform/artifact_registry
+    - terraform init
+    - terraform apply -auto-approve -var-file="../variables.tfvars"
+  # deprecated
+  only:
+    refs:
+      - main
+
+
+build-app/docker-build-to-GCP:
+  stage: build-app
+  image: docker
+  services:
+    - docker:dind
+  before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
+    - cp chat/esmConfig.example.js chat/esmConfig.js 
+    - sed -i "s|'http://ip:port'|'https://imposing-quasar-341914-chat-backend-chat-app-uatywyr3ha-de.a.run.app'|" chat/esmConfig.js 
+    - echo "chat/esmConfig.js :"
+    - cat chat/esmConfig.js 
+
+  script:
+    - echo "[BUILD STAGE] Run docker build and Push the image to docker register in gitlab"
+    - echo "Build Docker Image"
+    - docker buildx build --platform linux/amd64 -t chat-app -f Dockerfile .
+
+    - echo "Push Docker Image"
+    - sed '/^#/d;s/ = /=/;s/"//g' "terraform/variables.tfvars" > temp_file
+    - while IFS= read -r line; do
+        export -- "$line";
+      done < temp_file
+    - rm temp_file
+    - docker tag chat-app:latest ${location}-docker.pkg.dev/${project}/${project}-${repo}/chat-app:${image_tag}
+    - cat $GCP_SA_KEY | docker login -u _json_key --password-stdin https://${location}-docker.pkg.dev
+    # if the image can be pulled(image_tag is same), then terminate
+    - docker pull ${location}-docker.pkg.dev/${project}/${project}-${repo}/chat-app:${image_tag} && exit 1
+    - docker push ${location}-docker.pkg.dev/${project}/${project}-${repo}/chat-app:${image_tag}
+
+deploy:
+  stage: deploy
+  variables:
+    GOOGLE_APPLICATION_CREDENTIALS: "/tmp/credentials.json"
+  before_script:
+    - cat $GCP_SA_KEY > /tmp/credentials.json
+
+  script:
+    - cd terraform/cloud_run
+    - terraform init
+    - terraform apply -auto-approve -var-file="../variables.tfvars"
+  # deprecated
+  only:
+    refs:
+      - main
+
+after_script:
+  - rm /tmp/credentials.json

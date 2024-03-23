@@ -88,21 +88,18 @@ const ChatScreen = ({ navigation, route }) => {
             <S.Background>
                 {/* <View style={styles.container}> */}
                 <View>
-                    {/* <ScrollView style={styles.scrollView}> */}
-                    <S.MessageContainer>
-                        <ScrollView style={{ flex: 1,height: '82vh' }}>
-                            {messages.map((msg, idx) => (
-                                <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
-                                    <Text>{msg.msg}</Text>
-                                </View>
-                            ))}
+                    <S.ChatContainer>
+                        {/* <ScrollView style={styles.scrollView}> */}
+                        <ScrollView>
+                                {messages.map((msg, idx) => (
+                                    <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
+                                        <Text>{msg.msg}</Text>
+                                    </View>
+                                ))}
                         </ScrollView>
                         {/* <View style={styles.inputContainer}> */}
-                        <S.ChatInputBox>
-
                             <Input
-                                style={{ color: '#888',backgroundColor: '#333', borderRadius: 5, padding: 10}}
-                                placeholder='請輸入訊息'
+                                placeholder='plz text up'
                                 value={message}
                                 onChangeText={text => setMessage(text)}
                                 editable={isConnected}
@@ -114,10 +111,8 @@ const ChatScreen = ({ navigation, route }) => {
                                 disabled={!isConnected}>
                                 <Text style={styles.buttonCaption}>送出</Text>
                             </TouchableOpacity>
-                        </S.ChatInputBox>
                         {/* </View> */}
-
-                    </S.MessageContainer>
+                    </S.ChatContainer>
                 </View>
 
             </S.Background>
@@ -141,23 +136,22 @@ const styles = StyleSheet.create({
         maxWidth: '80%',
         marginVertical: 5,
         padding: 10,
-        // borderWidth: 1,
+        borderWidth: 1,
         borderRadius: 5,
     },
     leftMessage: {
         alignSelf: 'flex-start',
-        // borderColor: '#888',
+        borderColor: '#888',
         backgroundColor: '#888',
     },
     rightMessage: {
         alignSelf: 'flex-end',
-        // borderColor: '#aaa',
+        borderColor: '#aaa',
         backgroundColor: '#aaa',
     },
     button: {
       margin: 5,
-    //   width: '99%',
-      width: 'auto',
+      width: '80%',
       alignSelf: 'center',
       backgroundColor: BTN_COLOR,
       padding: 10,

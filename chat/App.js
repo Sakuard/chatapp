@@ -9,12 +9,13 @@ import ChatScreen from './Screen/ChatScreen';
 // import { AuthProvider } from './context/AuthContext';
 
 import { TITLE_BG_COLOR } from './esmConfig';
+import * as S from './src/styled.js'
 
 const Stack = createNativeStackNavigator();
 
 // The following is to define Styles globally
 const globalScreenOptions = {
-  headerStyle: {backgroundColor: TITLE_BG_COLOR},
+  headerStyle: {backgroundColor: S.TITLE_BG_COLOR},
   headerTitleStyle: {color: 'white'},
   headerTintColor: 'white',
   // backgroundColor: '#32503c'
@@ -23,17 +24,19 @@ const globalScreenOptions = {
 export default function App({navigation}) {
   return (
     // <AuthProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={globalScreenOptions}>
-          <Stack.Screen name='程人頻道' component={LoginScreen} />
-          <Stack.Screen
-            name='Chat'
-            component={ChatScreen}
-            options={{
-              title:'程人聊天室'
-            }}/>
-        </Stack.Navigator>
-      </NavigationContainer>
+    <>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={globalScreenOptions}>
+            <Stack.Screen name='程人頻道' component={LoginScreen} />
+            <Stack.Screen
+              name='Chat'
+              component={ChatScreen}
+              options={{
+                title:'程人聊天室'
+              }}/>
+          </Stack.Navigator>
+        </NavigationContainer>
+    </>
     // </AuthProvider>
   );
 }

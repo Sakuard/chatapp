@@ -11,6 +11,7 @@ const corsSet = {
     origin: '*'
 };
 app.use(cors(corsSet));
+app.set('trust proxy', true);
 
 // const httpsOptions = {
 //     key: fs.readFileSync('./cert/server.key'),
@@ -20,6 +21,7 @@ app.use(cors(corsSet));
 // const server = https.createServer(httpsOptions, app);
 const server = http.createServer(app);
 const io = new WebSocketServer(server, corsSet);
+
 
 app.get('/', (req, res) => {
     console.log(`req on /`)
