@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Dimensions, TextInput, Alert, BackHandler, Modal, Animated } from 'react-native';
 import { Button, Input } from '@rneui/base';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -16,16 +16,33 @@ const ChatScreen = ({ navigation, route }) => {
     const [isConnected, setIsConnected] = useState(false);
     const [isSecretFull, setIsSecretFull] = useState(false);
     const [chatSession, setChatSession] = useState('');
+    const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+    const [useKeyin, setUseKeyin] = useState(false);
+
+    const [backDialog, setBackDialog] = useState(false);
+    const [doGoback, setDoGoback] =useState(false)
+    const [keyin, setKeyin] = useState(false);
+    const fadeAnim = useRef(new Animated.Value(0)).current;
+    // const screenWidth = Dimensions.get('window').width;
     
     const socketClientRef = useRef(null);
+    const scrollRef = useRef();
 
     localStorage.setItem('TECHPORN_CHAT_ACTIVE', true);
+    useEffect(() => {
+        if (!doGoback && chatReady) {
+            const unsubscribe = navigation.addListener('beforeRemove', (e) => {
+                setBackDialog(true);
+                e.preventDefault();
+            });
+            return unsubscribe;
+        } else if (doGoback) {
+            navigation.goBack();
+            setDoGoback(false);
+        } else {
+        }
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            headerBackTitle: '離開聊天室'
-        });
-    }, [navigation]);
+    }, [doGoback,navigation,chatReady])
 
     useEffect(() => {
         let session;
@@ -43,10 +60,18 @@ const ChatScreen = ({ navigation, route }) => {
         if (secretCode === null || secretCode === undefined) {
             secretCode = '';
         }
-        socketClientRef.current.connect(session, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull);
+        socketClientRef.current.connect(session, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull, setUseKeyin);
+        
+        const onChange = () => {
+            const width = Dimensions.get('window').width;
+            setScreenWidth(width);
+        }
+        Dimensions.addEventListener('change', onChange);
+
         return() => {
             socketClientRef.current.disconnect(session);
             localStorage.removeItem('TECHPORN_CHAT_ACTIVE');
+            Dimensions.removeEventListener('change', onChange);
         }
     },[])
     useEffect(() => {
@@ -54,9 +79,59 @@ const ChatScreen = ({ navigation, route }) => {
             navigation.goBack();
         }
     },[isSecretFull])
+    useEffect(() => {
+        scrollRef.current.scrollToEnd({ animated: true });
+    }, [messages])
+    useEffect(() => {
+        let session;
+        if (localStorage.getItem('TECHPORN_CHAT_USER') === null || localStorage.getItem('TECHPORN_CHAT_USER') === undefined || localStorage.getItem('TECHPORN_CHAT_USER') === '') {
+            localStorage.setItem('TECHPORN_CHAT_USER', uuidv4());
+            setChatSession(localStorage.getItem('TECHPORN_CHAT_USER'));
+            session = localStorage.getItem('TECHPORN_CHAT_USER');    
+        }
+        else {
+            setChatSession(localStorage.getItem('TECHPORN_CHAT_USER'));
+            session = localStorage.getItem('TECHPORN_CHAT_USER');
+        }
+        if (keyin && message !== '') {
+            // console.log(`already keying`)
+        }
+        if (message !== '' && !keyin) {
+            setKeyin(true);
+            socketClientRef.current.keyin(session)
+            console.log(`key in`)
+        }
+        if (message === '') {
+            setKeyin(false);
+            socketClientRef.current.keyout(session)
+            console.log(`key out`)
+        }
+
+    },[message,keyin])
+    const fadeIn = () => {
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true
+        }).start();
+    }
+    const fadeOut = () => {
+        Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true
+        }).start();
+    }
+    useEffect(() => {
+        useKeyin ? fadeIn() : fadeOut()
+    }, [useKeyin])
     
 
     const sendMessage = () => {
+        if (message === '') {
+            return;
+        }
+        setKeyin(false);
         if (socketClientRef.current) {
             socketClientRef.current.sendMessage(message, chatSession);
             setMessages(prevMessages => [...prevMessages, { msg: message, session: chatSession, received: false }]);
@@ -64,6 +139,14 @@ const ChatScreen = ({ navigation, route }) => {
         }
     };
 
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            sendMessage();
+            e.preventDefault();
+        }
+    }
+
+    
     if (isSecretFull) {
         return (
             <View style={styles.container}>
@@ -85,37 +168,83 @@ const ChatScreen = ({ navigation, route }) => {
 
     return (
         <>
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={backDialog}
+                onRequestClose={() => {
+                    setBackDialog(false);
+                }}>
+                <View style={styles.centeredView}>
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalText}>您確定要離開聊天室嗎?</Text>
+                        <View style={{display:'flex',flexDirection:'row'}}>
+                            <Button
+                                color={'#285a4d'}
+                                style={styles.modalBtn}
+                                onPress={() => {
+                                    setBackDialog(false);
+                                }}
+                                title="取消"
+                                />
+                            <Button
+                                color={'#285a4d'}
+                                style={styles.modalBtn}
+                                onPress={() => {
+                                    setBackDialog(false);
+                                    navigation.goBack();
+                                    setDoGoback(true);
+                                }}
+                                title="確定"
+                            />
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+
             <S.Background>
                 {/* <View style={styles.container}> */}
                 <View>
                     {/* <ScrollView style={styles.scrollView}> */}
                     <S.MessageContainer>
-                        <ScrollView style={{ flex: 1,height: '82vh' }}>
+                        {/* <ScrollView style={{ flex: 1,height: '82vh' }}> */}
+                        <ScrollView ref={scrollRef} style={{ flex: 1,height: '82vh' }}>
                             {messages.map((msg, idx) => (
                                 <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
                                     <Text>{msg.msg}</Text>
                                 </View>
                             ))}
                         </ScrollView>
-                        {/* <View style={styles.inputContainer}> */}
-                        <S.ChatInputBox>
+                        {/* {!useKeyin && <p style={{height: '0px'}}></p> } */}
+                        <Animated.View style={{opacity: fadeAnim}}>
+                            {
+                                useKeyin
+                                ? <View><Text style={{backgroundColor:'#87a578', padding: 5, marginLeft: 15, marginBottom: 5, width: 120, borderRadius: 5}}>對方正在輸入...</Text></View>
+                                : <p style={{height: '13px', marginBottom: 5}}></p>
+                            }
+                        </Animated.View>
+                        <View style={[styles.inputContainer, screenWidth < 325 ? { flexDirection: 'column' } : { flexDirection: 'row' }]}>
 
-                            <Input
-                                style={{ color: '#888',backgroundColor: '#333', borderRadius: 5, padding: 10}}
-                                placeholder='請輸入訊息'
-                                value={message}
-                                onChangeText={text => setMessage(text)}
-                                editable={isConnected}
-                            />
-                            {/* <Button onPress={sendMessage} disabled={!isConnected} title='送出' /> */}
+                            <div>
+                                {/* <Input */}
+                                <TextInput
+                                    style={[styles.inputField, screenWidth < 325 ? { width: '100%', flex: undefined } : { flex: 1, width: screenWidth-100 }]}
+                                    placeholder='請輸入訊息'
+                                    multiline={true}
+                                    value={message}
+                                    onChangeText={text => setMessage(text)}
+                                    onKeyPress={handleKeyDown}
+                                    editable={isConnected}
+                                />
+                            </div>
                             <TouchableOpacity
-                                style={styles.button}
+                                style={[styles.button, screenWidth > 325 ? { width: 60, marginLeft: 10 } : screenWidth > 250 ? { width: 230, margin: "10 10" } : { width: 180, margin: "10 10" } ]}
                                 onPress={sendMessage}
                                 disabled={!isConnected}>
                                 <Text style={styles.buttonCaption}>送出</Text>
                             </TouchableOpacity>
-                        </S.ChatInputBox>
-                        {/* </View> */}
+                        </View>
 
                     </S.MessageContainer>
                 </View>
@@ -128,10 +257,46 @@ const ChatScreen = ({ navigation, route }) => {
 export default ChatScreen;
 
 const styles = StyleSheet.create({
+    centeredView: {
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        marginTop: 22
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: "#999",
+        borderRadius: 5,
+        paddingTop:10,
+        paddingHorizontal: 10,
+        paddingBottom: 5,
+        alignItems: "center",
+        shadowColor: "#000",
+        shadowOffset: {
+            width: 0,
+            height: 2
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5
+    },
+    modalText: {
+        marginBottom: 5,
+        textAlign: "center",
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#444'
+    },
+    modalBtn: {
+        borderRadius: 100,
+        marginTop: 5,
+        marginBottom: 5,
+        marginHorizontal: 5,
+        width: 80,
+    },
     container: {
         flex: 1,
         padding: 10,
-        // backgroundColor: '#ddd',
         backgroundColor: CHAT_BGN,
     },
     scrollView: {
@@ -141,28 +306,40 @@ const styles = StyleSheet.create({
         maxWidth: '80%',
         marginVertical: 5,
         padding: 10,
-        // borderWidth: 1,
         borderRadius: 5,
     },
     leftMessage: {
         alignSelf: 'flex-start',
-        // borderColor: '#888',
         backgroundColor: '#888',
+        marginLeft: 10,
     },
     rightMessage: {
         alignSelf: 'flex-end',
-        // borderColor: '#aaa',
-        backgroundColor: '#aaa',
+        backgroundColor: '#87a578',
+        marginRight: 10,
+    },
+    inputContainer: {
+        // flexDirection: screenWidth < 325 ? 'column' : 'row',
+        alignItems: 'center',
+        flexWrap: 'nowrap', // 防止換行
+    },
+    inputField: {
+        backgroundColor: '#333',
+        borderRadius: 5,
+        padding: 10,
+        marginLeft: 10,
+        // width: screenWidth < 325 ? '100%' : undefined,
+        // flex: screenWidth < 325 ? undefined : 1
     },
     button: {
-      margin: 5,
-    //   width: '99%',
-      width: 'auto',
-      alignSelf: 'center',
-      backgroundColor: BTN_COLOR,
-      padding: 10,
-      alignItems: 'center',
-      borderRadius: 10,
+        // minWidth: screenWidth < 325 ? '100%' : '60px',
+        backgroundColor: BTN_COLOR,
+        padding: 10,
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 10,
+        marginLeft: 10, // 添加左邊距以防止超出
+        marginBottom: 5
     },
     buttonCaption: {
       color: BTN_CAPTION,
