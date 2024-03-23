@@ -1,6 +1,6 @@
 import * as React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 
@@ -10,6 +10,7 @@ import ChatScreen from './Screen/ChatScreen';
 
 import { TITLE_BG_COLOR } from './esmConfig';
 import * as S from './src/styled.js'
+import SEO from './src/components/SEOHead.js'
 
 const Stack = createNativeStackNavigator();
 
@@ -22,14 +23,19 @@ const globalScreenOptions = {
 }
 
 export default function App({navigation}) {
+
   return (
     // <AuthProvider>
     <>
+        <SEO title='程人頻道 | 聊天室' description='程人頻道聊天室' url='https://techporn.io/' >
+          <meta name='description' content='工程師Podcast' />
+          <meta name='description' content='程人頻道聊天室' />
+        </SEO>
         <NavigationContainer>
           <Stack.Navigator screenOptions={globalScreenOptions}>
-            <Stack.Screen name='程人頻道' component={LoginScreen} />
+            <Stack.Screen name='程人頻道 | 聊天室' component={LoginScreen} />
             <Stack.Screen
-              name='Chat'
+              name='chatroom'
               component={ChatScreen}
               options={{
                 title:'程人聊天室'

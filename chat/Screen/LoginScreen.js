@@ -1,6 +1,7 @@
 import { KeyboardAvoidingView, StyleSheet, Text, View, TouchableOpacity  } from 'react-native'
 import { Button,Input } from '@rneui/base'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
+import { Animated } from 'react-native';
 
 import { BG_COLOR, BTN_COLOR, BTN_CAPTION, INPUT_BG_COLOR, INPUT_COLOR } from '../esmConfig';
 import * as S from '../src/styled';
@@ -8,66 +9,116 @@ import * as S from '../src/styled';
 const LoginScreen = ({ navigation }) => {
   
   const [secretCode, setSecretCode] = useState('')
+  const [useWords, setUseWords] = useState(false)
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const textTogglerAnim = useRef(new Animated.Value(1)).current;
   
   useEffect(() => {
     let chatActive = localStorage.getItem('TECHPORN_CHAT_ACTIVE');
     if (chatActive) {
-      navigation.navigate('Chat', {secretCode: ''});
+      navigation.navigate('chatroom', {secretCode: ''});
     }
   }, [navigation])
   
   const join = (secretCode) => {
-    navigation.navigate('Chat', {secretCode});
+    navigation.navigate('chatroom', {secretCode});
     setSecretCode('');
+  }
+
+  const fadeIn = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 150,
+      useNativeDriver: true
+    }).start();
+  }
+  const fadeOut = () => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 150,
+      useNativeDriver: true
+    }).start();
+  }
+  useEffect(() => {
+    useWords ? fadeIn() : fadeOut()
+  }, [useWords])
+  const toggleText = () => {
+    Animated.timing(textTogglerAnim, {
+       toValue: 0,
+        duration: 150,
+        useNativeDriver: true
+    }).start(() => {
+      setUseWords(!useWords);
+      Animated.timing(textTogglerAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true
+      }).start();
+    })
   }
 
   return (
     <>
-    <S.Background>
+      <div>
+          <title>程人頻道</title>
+          <meta name="description" content="程人聊天室" ></meta>
+        </div>
+      <S.Background>
 
-      {/* <KeyboardAvoidingView style={styles.container} > */}
-      <KeyboardAvoidingView style={S.HomeContainer} >
-          <Input
-            inputContainerStyle={styles.input}
-            value={secretCode}
-            onChangeText={text => setSecretCode(text)}
-            placeholder='請輸入密語' />
-          {/* <Button
-            style={styles.button}
-            onPress={() => {
-              if (secretCode === '') {
-                alert('請輸入密語');
-                return;
+        <KeyboardAvoidingView style={S.HomeContainer} >
+            <Animated.View style={{opacity: fadeAnim}}>
+              {/* {!useWords && <h1 style={{height:'20px'}}></h1>} */}
+              { useWords
+                ? <Input inputContainerStyle={styles.input} value={secretCode} onChangeText={text => setSecretCode(text)} placeholder='請輸入密語' />
+                : <h1 style={{height:'20px'}}></h1>
               }
-              join(secretCode);
-            }}
-            title='使用密語' /> */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              if (secretCode === '') {
-                alert('請輸入密語');
-                return;
-              }
-              join(secretCode);
-            }}>
-              <Text style={styles.buttonCaption}>使用密語</Text>
-          </TouchableOpacity>
-          {/* <Button
-            style={styles.button}
-            onPress={() => {
-              join(secretCode);
-            }}
-            title='開始聊天' /> */}
-          <TouchableOpacity
-            style={styles.button}
-            onPress={() => {
-              join(secretCode);
-            }}>
-              <Text style={styles.buttonCaption}>開始聊天</Text>
-          </TouchableOpacity>
-      </KeyboardAvoidingView>
-    </S.Background>
+            </Animated.View>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                if (useWords && secretCode === '') {
+                  alert('請輸入密語');
+                  return;
+                }
+                join(secretCode);
+              }}>
+                <Text style={styles.buttonCaption}>開始聊天</Text>
+            </TouchableOpacity>
+
+            {/* {!useWords && <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setUseWords(true);
+              }}>
+                <Text style={styles.buttonCaption}>使用暗號</Text>
+            </TouchableOpacity>} */}
+            {/* {useWords ?  <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setUseWords(false);
+              }}>
+                <Text style={styles.buttonCaption}>取消</Text>
+            </TouchableOpacity> : <TouchableOpacity
+              style={styles.button}
+              onPress={() => {
+                setUseWords(true);
+              }}>
+                <Text style={styles.buttonCaption}>使用暗號</Text>
+            </TouchableOpacity>} */}
+                <TouchableOpacity
+                  style={styles.button}
+                  onPress={() => {
+                    // useWords ? setUseWords(false) : setUseWords(true);
+                    toggleText();
+                  }}>
+                    <Animated.View style={{opacity: textTogglerAnim}}>
+                        <Text style={styles.buttonCaption}>{ useWords ? '取消' : '使用暗號'}</Text>
+                    </Animated.View>
+                </TouchableOpacity>
+
+
+        </KeyboardAvoidingView>
+      </S.Background>
     </>
   )
 }

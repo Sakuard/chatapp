@@ -27,12 +27,13 @@ class SocketClient {
      * @param {Function} setMessages - react state function
      * @param {Function} setIsSecretFull - react state function
      */
-    connect(sessionID, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull) {
+    connect(sessionID, secretCode, setChatReady, setIsConnected, setMessages, setIsSecretFull, setUserKeyin) {
         // here, i want to add a localstorage for 
         this.socket.on('connected', () => {
             // this.socket.emit('joinRoom', this.socket.id);
             let joinParams = this.paramsGen(this.socket.id, secretCode, sessionID);
-            this.socket.emit('joinRoom/v2', joinParams);
+            // this.socket.emit('joinRoom/v2', joinParams);
+            this.socket.emit('joinRoom/v3', joinParams);
         });
 
         this.socket.on('reJoin', data => {
@@ -76,6 +77,15 @@ class SocketClient {
             alert(`密語房: ${secretCode} 已滿員`)
             setIsSecretFull(true);
         })
+
+        this.socket.on('keyin', data => {
+            console.log(`keyin: `, data);
+            setUserKeyin(true)
+        })
+        this.socket.on('keyout', data => {
+            console.log(`keyout: `, data);
+            setUserKeyin(false)
+        })
     }
 
     disconnect(sessionid) {
@@ -89,6 +99,13 @@ class SocketClient {
             msg: message
         }
         this.socket.emit('sendMessage', msgParams);
+    }
+
+    keyin(session) {
+        this.socket.emit('keyin', session);
+    }
+    keyout(session) {
+        this.socket.emit('keyout', session);
     }
 
     /**
