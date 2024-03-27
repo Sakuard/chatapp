@@ -27,8 +27,6 @@ const ChatScreen = ({ navigation, route }) => {
     const [keyin, setKeyin] = useState(false);
     const fadeAnim = useRef(new Animated.Value(0)).current;
     // const screenWidth = Dimensions.get('window').width;
-    // console.log(`height: `, screenHeight)
-    const [tickCnt, setTickCnt] = useState(1);
     
     const socketClientRef = useRef(null);
     const scrollRef = useRef();
@@ -237,61 +235,50 @@ const ChatScreen = ({ navigation, route }) => {
             </Modal>
 
 
-            <KeyboardAvoidingView
-                style={{
-                    flex: 1,
-                    background: `
-                        radial-gradient(
-                            30.97% 85.07% at 76.84% 37.7%,
-                            #1C3131 0%, 
-                            rgba(33, 65, 65, 0) 100%
-                        ), 
-                        radial-gradient(
-                            47.85% 46.43% at 10.14% -10.99%, 
-                            #1B2916 0%, 
-                            rgba(43, 62, 36, 0) 100%
-                        ), 
-                        radial-gradient(
-                            36.9% 48.16% at 28.58% 44.54%,
-                            #18271F 0%,
-                            rgba(27, 46, 35, 0) 100%
-                        ), 
-                        #000000`
-            }}>
-                <ScrollView ref={scrollRef} style={{flex: 1, marginBottom: 100}}>
-                    {messages.map((msg, idx) => (
-                        <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
-                            <Text>{msg.msg}</Text>
-                        </View>
-                    ))}
-                </ScrollView>
+            <S.Background>
+                {/* <View style={styles.container}> */}
+                <View>
+                    {/* <ScrollView style={styles.scrollView}> */}
+                    <S.MessageContainer>
+                        {/* <ScrollView style={{ flex: 1,height: '82vh' }}> */}
+                        <ScrollView ref={scrollRef} style={{ flex: 1,height: '82vh' }}>
+                            {messages.map((msg, idx) => (
+                                <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
+                                    <Text>{msg.msg}</Text>
+                                </View>
+                            ))}
+                        </ScrollView>
+                        {/* {!useKeyin && <p style={{height: '0px'}}></p> } */}
+                        <Animated.View style={{opacity: fadeAnim}}>
+                            {
+                                useKeyin
+                                ? <View><Text style={{backgroundColor:'#87a578', padding: 5, marginLeft: 15, marginBottom: 5, width: 120, borderRadius: 5}}>對方正在輸入...</Text></View>
+                                : <p style={{height: '13px', marginBottom: 5}}></p>
+                            }
+                        </Animated.View>
+                        <View style={[styles.inputContainer, screenWidth < 325 ? { flexDirection: 'column' } : { flexDirection: 'row' }]}>
 
-                <View style={{position: 'absolute', bottom: 0, width: '100%'}}>
-                    <Animated.View style={{opacity: fadeAnim}}>
-                        {
-                            useKeyin
-                            ? <View><Text style={{backgroundColor:'#87a578', padding: 5, marginLeft: 15, marginBottom: 5, width: 120, borderRadius: 5}}>對方正在輸入...</Text></View>
-                            : <p style={{height: '13px', marginBottom: 5}}></p>
-                        }
-                    </Animated.View>
-                    <View style={[styles.inputContainer, screenWidth < 325 ? { flexDirection: 'column' } : { flexDirection: 'row' }]}>
-                        <TextInput
-                            style={[styles.inputField, screenWidth < 325 ? { width: '100%', flex: undefined } : { flex: 1, width: screenWidth-100 }]}
-                            placeholder='請輸入訊息'
-                            multiline={true}
-                            value={message}
-                            onChangeText={text => setMessage(text)}
-                            onKeyPress={handleKeyDown}
-                            editable={isConnected}
-                        />
-                        <TouchableOpacity
-                            style={[styles.button, screenWidth > 325 ? { width: 60, marginLeft: 10 } : screenWidth > 250 ? { width: 230, margin: "10 10" } : { width: 180, margin: "10 10" } ]}
-                            onPress={sendMessage}
-                            disabled={!isConnected}>
-                            <Text style={styles.buttonCaption}>送出</Text>
-                        </TouchableOpacity>
-                    </View>
-                    <div style={{height: 20}}></div>
+                            <div>
+                                {/* <Input */}
+                                <TextInput
+                                    style={[styles.inputField, screenWidth < 325 ? { width: '100%', flex: undefined } : { flex: 1, width: screenWidth-100 }]}
+                                    placeholder='請輸入訊息'
+                                    multiline={true}
+                                    value={message}
+                                    onChangeText={text => setMessage(text)}
+                                    onKeyPress={handleKeyDown}
+                                    editable={isConnected}
+                                />
+                            </div>
+                            <TouchableOpacity
+                                style={[styles.button, screenWidth > 325 ? { width: 60, marginLeft: 10 } : screenWidth > 250 ? { width: 230, margin: "10 10" } : { width: 180, margin: "10 10" } ]}
+                                onPress={sendMessage}
+                                disabled={!isConnected}>
+                                <Text style={styles.buttonCaption}>送出</Text>
+                            </TouchableOpacity>
+                        </View>
+
+                    </S.MessageContainer>
                 </View>
             </KeyboardAvoidingView>
         </>
