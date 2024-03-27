@@ -90,7 +90,7 @@ class RedisCache {
 
     lrem(key: string, count: number, value: any) {
         let arr = this.cache.get(key) || []
-        console.log(`key: ${key},idx: ${arr.indexOf(value)}`)
+        // console.log(`key: ${key},idx: ${arr.indexOf(value)}`)
         if (typeof arr === 'object') {
             let index = arr.indexOf(value)
             if (index !== -1) {

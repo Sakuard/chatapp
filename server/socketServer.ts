@@ -22,10 +22,15 @@ interface ChatRoom {
     roomfull: boolean;
     users: string[];
 }
+interface EmitResponse {
+    text: string;
+    ready: boolean;
+}
 
 class WebSocketServer {
     private io: typeof Server;
     private chatrooms: Map<string,ChatRoom>;
+    private sysdata: any[];
 
     /**
      * Constructs a WebSocketServer.
@@ -44,12 +49,13 @@ class WebSocketServer {
 
         /** @type {Map.<String, {roomfull: boolean, users: Array.<String>}>} chatrooms - chatroom map */
         this.chatrooms = new Map<string, ChatRoom>();
-        
+        this.sysdata = []
         this.setup();
     }
 
     private setup(): void {
         this.io.on('connection', (socket: typeof Socket) => {
+            this.sysdata.push({ id: socket.id})
             // console.log(`socket.id: `, socket.id);
             socket.emit('connected', `${socket.id}`);
             // socket.on('joinRoom', (userid: string) => this.joinRoom(socket, userid));
@@ -63,8 +69,7 @@ class WebSocketServer {
             socket.on('keyout', (session:  string) => this.keyout(socket, session))
             
             socket.on('data', () => {
-                console.log(`redis: `, $redis)
-                console.log(`chatrooms: `, this.chatrooms)
+                let users = this.sysdata;
             })
         });
     }
@@ -111,6 +116,7 @@ class WebSocketServer {
     ): Promise<void> {
         const { id, session, secretcode } = joinParams;
         const sessionKey = `chatSession:${session}`
+        // console.log(`socket: ${id}`)
         $redis.rPush(session, id);
         let joined = false;
         let joinedRoom = await $redis.get(sessionKey);
@@ -184,6 +190,7 @@ class WebSocketServer {
             let roomStatus = this.chatrooms.get(joinedRoom) || { roomfull: false };
             $redis.set(id, sessionKey);
             socket.join(joinedRoom);
+            let roomData = this.chatrooms.get(joinedRoom)
             let chatHistory =
                 await $redis.LRANGE(`roomMSG:${joinedRoom}`, 0, -1)
                     .then((msg: any) => {
@@ -193,6 +200,18 @@ class WebSocketServer {
                     })
                     .catch((err: any) => console.log(`error: ${err}`));
             socket.emit('reJoin', { text: JSON.stringify(chatHistory), ready: roomStatus.roomfull });
+            
+            if (roomData?.roomfull) {
+                roomData.users.indexOf(sessionKey)===-1?roomData.users.push(sessionKey):null;
+                if (roomData.users.length === 1) {
+                    let msg = {
+                        session: 'system',
+                        msg: '對方暫時不在線上',
+                        timestamp: new Date().toISOString(),
+                    }
+                    socket.emit('user/afk', { text: JSON.stringify(msg), ready: true})
+                }
+            }
         }
     }
     private async joinRoomV2(
@@ -357,6 +376,7 @@ class WebSocketServer {
     ): Promise<void> {
         let roomname = await $redis.get(`chatSession:${session}`)
         let chatSession = `chatSession:${session}`
+        // console.log(`socket: ${socket.id}`)
         if (roomname) {
             let msg = {
                 session: session,
@@ -368,10 +388,10 @@ class WebSocketServer {
             await $redis.del(`chatSession:${session}`);
             let idx = this.chatrooms.get(roomname)?.users.indexOf(chatSession);
             if (idx !== undefined) {
-                console.log(`del idx`)
+                // console.log(`del idx`)
                 this.chatrooms.get(roomname)?.users.splice(idx, 1);
             }
-            console.log(`chatroom room: `, this.chatrooms.get(roomname)?.users)
+            // console.log(`chatroom room: `, this.chatrooms.get(roomname)?.users)
             if (this.chatrooms.get(roomname)?.users.length === 0) {
                 await $redis.del(`roomMSG:${roomname}`);
                 this.chatrooms.delete(roomname);    
@@ -390,12 +410,13 @@ class WebSocketServer {
     private async disconnect(
         socket: {
             id: string;
+            leave: (arg0: string) => void;
             broadcast: {
                 to: (arg0: string) => {
                     (): any;
                     new(): any;
                     emit: {
-                        (arg0: string,arg1: string): void;
+                        (arg0: string,arg1: EmitResponse): void;
                         new(): any; 
                     };
                 };
@@ -403,6 +424,28 @@ class WebSocketServer {
         }
     ): Promise<void> {
         // console.log(`disconnect: `, socket.id)
+        const chatSession = await $redis.get(socket.id);
+        const joinedRoom = await $redis.get(chatSession)
+        // this.sysdata.splice(this.sysdata.indexOf(data), 1)
+        if (joinedRoom) {
+            // console.log(`joinedRoom: `, joinedRoom)
+            let roomData = this.chatrooms.get(joinedRoom)
+            // console.log(`roomData: `, roomData)
+            if (roomData) {
+                if (!roomData.roomfull) {
+                    // console.log(`badboy gocha`)
+                    socket.leave(joinedRoom);
+                    const sessionKey = await $redis.get(socket.id);
+                    $redis.del(sessionKey);
+                    $redis.del(socket.id);
+                    this.chatrooms.delete(joinedRoom);
+                }
+                if (roomData.roomfull) {
+                    socket.broadcast.to(joinedRoom).emit('user/afk', { text: `對方暫時離開`, ready: true})
+                    roomData.users.splice(roomData.users.indexOf(chatSession), 1)
+                }
+            }
+        }
         let sessionKey = await $redis.get(socket.id);
         if (sessionKey) {
             let session = sessionKey.replace('chatSession:', '');

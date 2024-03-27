@@ -68,7 +68,7 @@ class RedisCache {
       let arr = this.cache.get(key) || [];
       arr.push(value);
       this.cache.set(key, arr);
-      console.log(`key: ${key}, val:`, this.cache.get(key))
+    //   console.log(`key: ${key}, val:`, this.cache.get(key))
     }
     lRange(key, start, end) {
       let arr = this.cache.get(key) || [];
