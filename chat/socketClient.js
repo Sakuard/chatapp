@@ -50,6 +50,10 @@ class SocketClient {
             }
 
         })
+        this.socket.on('user/afk', data => {
+            let msg = JSON.parse(data.text);
+            setMessages(preMessages => [...preMessages, { msg: msg.msg, session: msg.session}])
+        })
         this.socket.on('joinedRoom', text => {
             setChatReady(text.ready);
             if (text.ready) {

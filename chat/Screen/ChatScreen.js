@@ -1,5 +1,6 @@
+// @ts-check
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Dimensions, TextInput, Alert, BackHandler, Modal, Animated } from 'react-native';
+import { ScrollView, StyleSheet, Text, View, TouchableOpacity, Dimensions, TextInput, Alert, BackHandler, Modal, Animated, KeyboardAvoidingView, Platform } from 'react-native';
 import { Button, Input } from '@rneui/base';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,6 +9,7 @@ import SocketClient from '../socketClient';
 
 import { CHAT_BGN, BTN_COLOR, BTN_CAPTION } from '../esmConfig';
 import * as S from '../src/styled.js';
+
 
 const ChatScreen = ({ navigation, route }) => {
     const [message, setMessage] = useState('');
@@ -26,6 +28,7 @@ const ChatScreen = ({ navigation, route }) => {
     const fadeAnim = useRef(new Animated.Value(0)).current;
     // const screenWidth = Dimensions.get('window').width;
     // console.log(`height: `, screenHeight)
+    const [tickCnt, setTickCnt] = useState(1);
     
     const socketClientRef = useRef(null);
     const scrollRef = useRef();
@@ -71,6 +74,10 @@ const ChatScreen = ({ navigation, route }) => {
             setScreenHeight(height);
         }
         Dimensions.addEventListener('change', onChange);
+
+        setInterval(() => {
+            setTickCnt(pre => (pre%3)+1)
+        }, 1000)
 
         return() => {
             socketClientRef.current.disconnect(session);
@@ -129,6 +136,19 @@ const ChatScreen = ({ navigation, route }) => {
     useEffect(() => {
         useKeyin ? fadeIn() : fadeOut()
     }, [useKeyin])
+
+    const renderTicks = () => {
+        switch (tickCnt) {
+            case 1:
+                return '.';
+            case 2:
+                return '. .';
+            case 3:
+                return '. . .';
+            default:
+                return '';
+        }
+    }
     
 
     const sendMessage = () => {
@@ -162,8 +182,18 @@ const ChatScreen = ({ navigation, route }) => {
         return (
             <>
                 <S.Background>
-                    <View>
-                        <S.TextContainer>配對中...</S.TextContainer>
+                    <View
+                        style={{
+                            display: 'flex',
+                            flexDirection: 'row',
+                            position: 'fixed',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)',
+                        }}>
+                        <S.TextContainer>配對中</S.TextContainer>
+                        <S.TextContainer>{renderTicks()}</S.TextContainer>
+                        {/* <S.TextContainer>...</S.TextContainer> */}
                     </View>
                 </S.Background>
             </>
@@ -207,53 +237,63 @@ const ChatScreen = ({ navigation, route }) => {
             </Modal>
 
 
-            <S.Background>
-                {/* <View style={styles.container}> */}
-                <View>
-                    {/* <ScrollView style={styles.scrollView}> */}
-                    <S.MessageContainer>
-                        {/* <ScrollView style={{ flex: 1,height: '82vh' }}> */}
-                        <ScrollView ref={scrollRef} style={{height: screenHeight-165}}>
-                            {messages.map((msg, idx) => (
-                                <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
-                                    <Text>{msg.msg}</Text>
-                                </View>
-                            ))}
-                        </ScrollView>
-                        {/* {!useKeyin && <p style={{height: '0px'}}></p> } */}
-                        <Animated.View style={{opacity: fadeAnim}}>
-                            {
-                                useKeyin
-                                ? <View><Text style={{backgroundColor:'#87a578', padding: 5, marginLeft: 15, marginBottom: 5, width: 120, borderRadius: 5}}>對方正在輸入...</Text></View>
-                                : <p style={{height: '13px', marginBottom: 5}}></p>
-                            }
-                        </Animated.View>
-                        <View style={[styles.inputContainer, screenWidth < 325 ? { flexDirection: 'column' } : { flexDirection: 'row' }]}>
-
-                            <div>
-                                {/* <Input */}
-                                <TextInput
-                                    style={[styles.inputField, screenWidth < 325 ? { width: '100%', flex: undefined } : { flex: 1, width: screenWidth-100 }]}
-                                    placeholder='請輸入訊息'
-                                    multiline={true}
-                                    value={message}
-                                    onChangeText={text => setMessage(text)}
-                                    onKeyPress={handleKeyDown}
-                                    editable={isConnected}
-                                />
-                            </div>
-                            <TouchableOpacity
-                                style={[styles.button, screenWidth > 325 ? { width: 60, marginLeft: 10 } : screenWidth > 250 ? { width: 230, margin: "10 10" } : { width: 180, margin: "10 10" } ]}
-                                onPress={sendMessage}
-                                disabled={!isConnected}>
-                                <Text style={styles.buttonCaption}>送出</Text>
-                            </TouchableOpacity>
+            <KeyboardAvoidingView
+                style={{
+                    flex: 1,
+                    background: `
+                        radial-gradient(
+                            30.97% 85.07% at 76.84% 37.7%,
+                            #1C3131 0%, 
+                            rgba(33, 65, 65, 0) 100%
+                        ), 
+                        radial-gradient(
+                            47.85% 46.43% at 10.14% -10.99%, 
+                            #1B2916 0%, 
+                            rgba(43, 62, 36, 0) 100%
+                        ), 
+                        radial-gradient(
+                            36.9% 48.16% at 28.58% 44.54%,
+                            #18271F 0%,
+                            rgba(27, 46, 35, 0) 100%
+                        ), 
+                        #000000`
+            }}>
+                <ScrollView ref={scrollRef} style={{flex: 1, marginBottom: 100}}>
+                    {messages.map((msg, idx) => (
+                        <View key={idx} style={[styles.messageBox, msg.session !== chatSession ? styles.leftMessage : styles.rightMessage]}>
+                            <Text>{msg.msg}</Text>
                         </View>
+                    ))}
+                </ScrollView>
 
-                    </S.MessageContainer>
+                <View style={{position: 'absolute', bottom: 0, width: '100%'}}>
+                    <Animated.View style={{opacity: fadeAnim}}>
+                        {
+                            useKeyin
+                            ? <View><Text style={{backgroundColor:'#87a578', padding: 5, marginLeft: 15, marginBottom: 5, width: 120, borderRadius: 5}}>對方正在輸入...</Text></View>
+                            : <p style={{height: '13px', marginBottom: 5}}></p>
+                        }
+                    </Animated.View>
+                    <View style={[styles.inputContainer, screenWidth < 325 ? { flexDirection: 'column' } : { flexDirection: 'row' }]}>
+                        <TextInput
+                            style={[styles.inputField, screenWidth < 325 ? { width: '100%', flex: undefined } : { flex: 1, width: screenWidth-100 }]}
+                            placeholder='請輸入訊息'
+                            multiline={true}
+                            value={message}
+                            onChangeText={text => setMessage(text)}
+                            onKeyPress={handleKeyDown}
+                            editable={isConnected}
+                        />
+                        <TouchableOpacity
+                            style={[styles.button, screenWidth > 325 ? { width: 60, marginLeft: 10 } : screenWidth > 250 ? { width: 230, margin: "10 10" } : { width: 180, margin: "10 10" } ]}
+                            onPress={sendMessage}
+                            disabled={!isConnected}>
+                            <Text style={styles.buttonCaption}>送出</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <div style={{height: 20}}></div>
                 </View>
-
-            </S.Background>
+            </KeyboardAvoidingView>
         </>
     );
 };

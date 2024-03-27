@@ -18,7 +18,7 @@ export const Background = styled.div`
             rgba(27, 46, 35, 0) 100%
         ), 
         #000000;
-    height: 100vh;
+    // height: 100vh;
     flex: 1;
     justify-content: center;
 
@@ -37,9 +37,8 @@ export const MessageContainer = styled.div`
 export const ChatInputBox = styled.div`
     display: flex;
     max-width: 93%;
+    margin: 150px
 `;
-
-
 
 export const HomeContainer = {
     flex: 1,
